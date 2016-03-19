@@ -18,9 +18,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
-#include <OpenGL/gl.h>
+
 #include <OpenGL/gl3.h>
-#include <OpenGL/glext.h>
 #include <OpenGL/gl3ext.h>
 
 #include <glm/glm.hpp>
@@ -371,11 +370,6 @@ void build_gl_resources (global_state& state) {
         map_data.edges.length ()*sizeof (map_data.edges [0]),
         map_data.edges.begin (),
         GL_STATIC_DRAW);
-
-    CHECK();
-    
-    glPointSize(10.0f);
-    glLineWidth(1.0f);
 	
 	CHECK();
 	
@@ -439,10 +433,17 @@ void draw_frame (global_state& state) {
 
 }
 
-int main (int argc, const char* argv []) {
+int main (int argc, const char* argv []) try {
     global_state context;
     
-    xtk::bsp_data_quake2 map_data (xtk::fetch_data (std::ifstream ("q2dm1.bsp", std::ios::binary)));
+    std::ifstream ifs ("data/maps/q2dm1.bsp", std::ios::binary);
+    
+    if (!ifs) {
+        std::cout << "Couldn't open file!\n";
+        return -1;
+    }
+    
+    xtk::bsp_data_quake2 map_data (xtk::fetch_data (std::move (ifs)));
     context.map_data = &map_data;
     
     
@@ -460,4 +461,8 @@ int main (int argc, const char* argv []) {
     teardown_sdl_and_gl (context);
 
     return 0;
+}
+catch (std::exception& ex) {
+    std::cout << ex.what () << "\n";
+    return -1;
 }

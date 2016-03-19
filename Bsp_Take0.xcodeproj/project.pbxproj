@@ -173,7 +173,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "curl http://dl.2bits.in/data.zip -o $BUILT_PRODUCTS_DIR/data.zip\nmkdir $BUILT_PRODUCTS_DIR/data\nunzip $BUILT_PRODUCTS_DIR/data.zip -d $BUILT_PRODUCTS_DIR/data\nrm $BUILT_PRODUCTS_DIR/data.zip";
+			shellScript = "if [ ! -d $BUILT_PRODUCTS_DIR/data ]; then\n    curl http://dl.2bits.in/data.zip -o $BUILT_PRODUCTS_DIR/data.zip\n    mkdir -p $BUILT_PRODUCTS_DIR/data\n    unzip $BUILT_PRODUCTS_DIR/data.zip -d $BUILT_PRODUCTS_DIR/data\n    rm $BUILT_PRODUCTS_DIR/data.zip\nfi";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
