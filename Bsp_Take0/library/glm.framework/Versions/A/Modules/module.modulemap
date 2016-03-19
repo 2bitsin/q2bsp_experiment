@@ -1,0 +1,6 @@
+framework module glm {
+  umbrella header "glm.h"
+
+  export *
+  module * { export * }
+}
