@@ -482,7 +482,7 @@ int main (int argc, const char* argv []) try {
     xtk::pakman_lock colormap_lock (pack_manager, "pics/colormap.pcx");
     xtk::pakman_lock texture_lock (pack_manager, "textures/e2u3/metal3_1.wal");
     
-
+ 
     auto pcx = xtk::pcx_decode (*colormap_lock);
     auto wal = xtk::wal_decode (*texture_lock, xtk::array_view<xtk::bitmap::value_type> {pcx.data (), pcx.data () + pcx.width ()});
     
