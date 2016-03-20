@@ -93,7 +93,7 @@ static quake2::bsp_point3f face_normal (bsp_point3f normal, std::uint16_t side) 
         normal.y = -normal.y;
         normal.z = -normal.z;
     }
-    return normal;
+    return normal; 
 }
 
 void xtk::quake2::build_bsp_faces (std::vector<bsp_vertex_attribute>& buffer, const bsp_data_quake2& bsp) {
