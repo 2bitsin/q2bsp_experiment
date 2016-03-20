@@ -15,13 +15,9 @@
 #include <iterator>
 #include <string>
 
+#include "debug.hpp"
+
 namespace xtk {
-    #define __xtk_assert(Y, X) if (!(X)) throw Y ("failed assertion: " #X)
-    #ifdef _DEBUG
-        #define __xtk_noexcept_if_nodebug
-    #else
-        #define __xtk_noexcept_if_nodebug noexcept
-    #endif
 
 
     template <typename T>
@@ -55,14 +51,14 @@ namespace xtk {
         const_reverse_iterator rend () const noexcept { return begin ()-1; }
         const_reverse_iterator crbegin () const noexcept { return end ()-1; }
         const_reverse_iterator crend () const noexcept { return begin ()-1; }
-        
+        /*
         array_view (iterator _begin, iterator _end):
             m_Begin (_begin),
             m_End (_end)
         {
             __xtk_assert (std::logic_error, m_End - m_Begin >= 0);
         }
-
+        */
         array_view (const_iterator _begin, const_iterator _end):
             m_Begin (const_cast<iterator> (_begin)),
             m_End (const_cast<iterator> (_end))

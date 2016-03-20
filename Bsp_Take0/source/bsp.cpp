@@ -6,8 +6,7 @@
 //  Copyright © 2016 Aleksandr Ševčenko. All rights reserved.
 //
 
-#include "bsp_quake2.hpp"
-#include "bsp_common.hpp"
+#include "bsp.hpp"
 #include "debug.hpp"
 
 #include <set>
@@ -16,28 +15,29 @@
 #include <cstdio>
 #include <iostream>
 
-
 using namespace xtk;
 
+/*
 template <typename T>
 inline array_view<T> _array_view_from_lump (const std::vector<std::uint8_t>& data, const bsp_lump& lump) {
-    return {reinterpret_cast<const T*> (std::data (data) + lump.offset),
-            reinterpret_cast<const T*> (std::data (data) + lump.offset + lump.length)
-            };
+    return {
+        reinterpret_cast<const T*> (std::data (data) + lump.offset),
+        reinterpret_cast<const T*> (std::data (data) + lump.offset + lump.length)
+    };
 }
 
 
 bsp_data_quake2::bsp_data_quake2 (std::vector<std::uint8_t> data):
     m_Data          (std::move (data)),
-    m_Header        (reinterpret_cast<const quake2::bsp_header&> (*std::data (m_Data))),
-    vertexes        (_array_view_from_lump<quake2::bsp_point3f>(m_Data, m_Header.vertices)),
-    edges           (_array_view_from_lump<quake2::bsp_edge2s>(m_Data, m_Header.edges)),
-    faces           (_array_view_from_lump<quake2::bsp_face>(m_Data, m_Header.faces)),
+    m_Header        (reinterpret_cast<const bsp_header&> (*std::data (m_Data))),
+    vertexes        (_array_view_from_lump<bsp_point3f>(m_Data, m_Header.vertices)),
+    edges           (_array_view_from_lump<bsp_edge2s>(m_Data, m_Header.edges)),
+    faces           (_array_view_from_lump<bsp_face>(m_Data, m_Header.faces)),
     face_edge_list  (_array_view_from_lump<std::int32_t>(m_Data, m_Header.face_edge_list)),
-    planes          (_array_view_from_lump<quake2::bsp_plane>(m_Data, m_Header.planes)),
-    texture_info    (_array_view_from_lump<quake2::bsp_texinfo>(m_Data, m_Header.texinfo))
+    planes          (_array_view_from_lump<bsp_plane>(m_Data, m_Header.planes)),
+    texture_info    (_array_view_from_lump<bsp_texinfo>(m_Data, m_Header.texinfo))
 {
-    typedef xtk::quake2::bsp_header header_type;
+    typedef xtk::bsp_header header_type;
     
     if (m_Header.signature != 'PSBI' || m_Header.version != bsp_version_quake2) {
         Debug::log ("%s : %s", __PRETTY_FUNCTION__, "Not Quake2 compatible BSP (Invalid signature or version)");
@@ -173,6 +173,6 @@ void xtk::quake2::build_bsp_faces (std::vector<bsp_vertex_attribute>& buffer, co
     }
 }
 
-
+*/
 
 

@@ -6,14 +6,16 @@
 //  Copyright © 2016 Aleksandr Ševčenko. All rights reserved.
 //
 
-
-#include "file_utils.hpp"
-#include "bsp.hpp"
+//#include "bsp.hpp"
 #include "debug.hpp"
+#include "pcx.hpp"
+#include "pakman.hpp"
 
 #include <string>
-#include <sstream>
 #include <regex>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <unordered_map>
 
 #include <SDL2/SDL.h>
@@ -94,7 +96,7 @@ struct global_state {
     SDL_GLContext pContext;
     NSWindow* pCocoaWindow;
     
-    xtk::bsp_data_quake2* map_data;
+    //xtk::bsp_data_quake2* map_data;
     
     double last_timestamp;
     double last_deltatime;
@@ -133,6 +135,7 @@ std::string annotate_shader_source (const std::string& source, const std::string
             }
         }
     }
+    
     iss.clear ();
     iss.str (source);
     oss << std::setfill(' ');
@@ -208,6 +211,7 @@ GLuint build_gl_shaders (const std::initializer_list<std::pair<GLenum, std::stri
 }
 
 void setup_sdl_and_gl (global_state& state) {
+
     SDL_LogSetOutputFunction (SDL_LogOutputFunction ([] (
         void*           userdata,
         int             category,
@@ -366,6 +370,7 @@ void teardown_gl_resources (global_state& state) {
 }
 
 void build_gl_resources (global_state& state) {
+/*
     auto& map_data = *state.map_data;
     
     std::vector<xtk::quake2::bsp_vertex_attribute> buff;
@@ -401,7 +406,7 @@ void build_gl_resources (global_state& state) {
         
         xtk::Debug::log ("%s\n", buffer);
     }
-    
+    */
 }
 
 void setup_glsl_program (global_state& state) {
@@ -436,7 +441,7 @@ void update_uniforms (global_state& state) {
 }
 
 void draw_frame (global_state& state) {
-    auto& map_data = *state.map_data;
+//    auto& map_data = *state.map_data;
     
     glClearColor (0.0f, 0.25f, 0.0f, 1.0f);
     glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -462,9 +467,36 @@ void draw_frame (global_state& state) {
 
 }
 
+#include <fstream>
+#include "wal.hpp"
+
 int main (int argc, const char* argv []) try {
     global_state context;
     
+    xtk::pakman& pack_manager = xtk::pakman::shared();
+    
+    pack_manager.mount ("data/pak2.pak");
+    pack_manager.mount ("data/pak1.pak");
+    pack_manager.mount ("data/pak0.pak");
+    
+    xtk::pakman_lock colormap_lock (pack_manager, "pics/colormap.pcx");
+    xtk::pakman_lock texture_lock (pack_manager, "textures/e2u3/metal3_1.wal");
+    
+
+    auto pcx = xtk::pcx_decode (*colormap_lock);
+    auto wal = xtk::wal_decode (*texture_lock, xtk::array_view<xtk::bitmap::value_type> {pcx.data (), pcx.data () + pcx.width ()});
+    
+    for (auto i = 0; i < 4; ++i) {
+        std::ofstream obin (("dump" + std::to_string (i) + ".raw").c_str (), std::ios::binary);
+        obin.write ((const char* )wal.miptex [i].data (),
+            wal.miptex [i].width()*
+            wal.miptex [i].height()*
+            sizeof (xtk::bitmap::value_type));
+    }
+    
+    return 0;
+    
+/*
     std::ifstream ifs ("data/maps/q2dm1.bsp", std::ios::binary);
     
     if (!ifs) {
@@ -474,7 +506,7 @@ int main (int argc, const char* argv []) try {
     
     xtk::bsp_data_quake2 map_data (xtk::fetch_data (std::move (ifs)));
     context.map_data = &map_data;
-    
+*/
     
     setup_sdl_and_gl (context);
     build_gl_resources(context);
@@ -491,7 +523,7 @@ int main (int argc, const char* argv []) try {
 
     return 0;
 }
-catch (std::exception& ex) {
-    std::cout << ex.what () << "\n";
+catch (const std::exception& ex) {
+    std::cout << "ERROR : " << typeid(ex).name() << " : " << ex.what () << "\n";
     return -1;
 }
