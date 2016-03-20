@@ -34,24 +34,29 @@ namespace xtk {
         const array_view<quake2::bsp_texinfo> texture_info;
         
     };
-    
-    struct bsp_vertex_attribute {
-        bsp_vertex_attribute (
-            const bsp_point3f& _0,
-            const bsp_point3f& _1,
-            const bsp_point2f& _2)
-        noexcept:
-            vertex (_0),
-            normal (_1),
-            uv_tex (_2)
-        {}
-        
-        bsp_point3f vertex;
-        bsp_point3f normal;
-        bsp_point2f uv_tex;
-    };
 
-    void build_bsp_faces (std::vector<bsp_vertex_attribute>& buffer, const bsp_data_quake2& bsp);
+    namespace quake2 {
+        struct bsp_vertex_attribute {
+            bsp_vertex_attribute (
+                const bsp_point3f& _0,
+                const bsp_point3f& _1,
+                const bsp_point2f& _2,
+                const bsp_point3f& _3)
+            noexcept:
+                vertex (_0),
+                normal (_1),
+                uv_tex (_2),
+                color (_3)
+            {}
+        
+            bsp_point3f vertex;
+            bsp_point3f normal;
+            bsp_point2f uv_tex;
+            bsp_point3f color;
+        };
+
+        void build_bsp_faces (std::vector<bsp_vertex_attribute>& buffer, const bsp_data_quake2& bsp);
+    }
 }
 
 
