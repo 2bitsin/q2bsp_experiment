@@ -85,7 +85,7 @@ char __basic_fragment_source [] = R"(
     layout (location = 0) out vec4 out_fragment_color;
 
     void main () {
-        out_fragment_color = vec4 (fs_vertex_color, g_constant_alpha);
+        out_fragment_color = vec4 (mix (fs_vertex_color, 1.0 - fs_vertex_color, g_constant_alpha), 1.0f);
     }
 )";
 
@@ -237,6 +237,8 @@ void setup_sdl_and_gl (global_state& state) {
     SDL_GL_SetAttribute (SDL_GL_DEPTH_SIZE, 32);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+    SDL_GL_SetAttribute (SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute (SDL_GL_MULTISAMPLESAMPLES, 16);
     
     state.pContext = SDL_GL_CreateContext (state.pWindow);
     SDL_GL_MakeCurrent (state.pWindow, state.pContext);
@@ -442,20 +444,17 @@ void draw_frame (global_state& state) {
     CHECK();
     
     glEnable (GL_DEPTH_TEST);
-    //glEnable (GL_CULL_FACE);
-    //glCullFace (GL_BACK);
-    //glFrontFace (GL_CW);
+    glEnable (GL_CULL_FACE);
+    glCullFace (GL_BACK);
+    glFrontFace (GL_CW);
     
-    //glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
-    
-    //glDisable (GL_DEPTH_TEST);
-    //glEnable (GL_BLEND);
-    //glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
+//    glPolygonOffset (-50.0f, -50.0f);
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
     glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
     
-    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
+//    glPolygonOffset (50.0f, 50.0f);
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 0.0f);
     glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
     glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
     
