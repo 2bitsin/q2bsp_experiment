@@ -86,6 +86,8 @@ namespace xtk {
     namespace quake2 {
         typedef ::xtk::bsp_point3s bsp_point3s;
         typedef ::xtk::bsp_point3f bsp_point3f;
+        typedef ::xtk::bsp_point2s bsp_point2s;
+        typedef ::xtk::bsp_point2f bsp_point2f;
         
         typedef std::array<std::uint16_t, 2u> bsp_edge2s;
     

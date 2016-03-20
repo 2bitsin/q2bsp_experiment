@@ -41,17 +41,28 @@ char __basic_vertex_source [] = R"(
     #version 410
 
     uniform mat4 g_model_view_projection;
-    uniform vec3 g_color_mix;
+    uniform mat3 g_normal_matrix;
     uniform vec3 g_constant_color;
+    uniform float g_constant_alpha;
 
     layout (location = 0) in vec3 vs_vertex_position;
-    layout (location = 1) in vec3 vs_vertex_color;
+    layout (location = 1) in vec3 vs_vertex_normal;
+    layout (location = 2) in vec2 vs_vertex_uv_tex;
+    layout (location = 3) in vec3 vs_vertex_color;
 
+    out vec4 fs_vertex_position;
+    out vec3 fs_vertex_normal;
+    out vec2 fs_vertex_uv_tex;
     out vec3 fs_vertex_color;
 
     void main () {
+        fs_vertex_position = g_model_view_projection * vec4 (vs_vertex_position, 1.0);
+        fs_vertex_normal = g_normal_matrix * vs_vertex_position;
+        fs_vertex_uv_tex = vs_vertex_uv_tex;
         fs_vertex_color = vs_vertex_color;
-        gl_Position = g_model_view_projection * vec4 (vs_vertex_position, 1.0);
+        
+        gl_Position = fs_vertex_position;
+        
     }
 )";
 
@@ -62,18 +73,19 @@ char __basic_fragment_source [] = R"(
     #version 410
 
     uniform mat4 g_model_view_projection;
-    uniform vec3 g_color_mix;
+    uniform mat3 g_normal_matrix;
     uniform vec3 g_constant_color;
+    uniform float g_constant_alpha;
 
+    in vec4 fs_vertex_position;
+    in vec3 fs_vertex_normal;
+    in vec2 fs_vertex_uv_tex;
     in vec3 fs_vertex_color;
 
     layout (location = 0) out vec4 out_fragment_color;
 
     void main () {
-        out_fragment_color = vec4 (
-            g_color_mix.x*g_constant_color +
-            g_color_mix.y*fs_vertex_color,
-            1.0);
+        out_fragment_color = vec4 (mix (fs_vertex_color, 1.0 - fs_vertex_color, g_constant_alpha), 1.0f);
     }
 )";
 
@@ -86,7 +98,8 @@ struct global_state {
     
     double last_timestamp;
     double last_deltatime;
-    
+        
+    GLsizei gl_element_count;
     GLuint gl_buffer_vertex;
     GLuint gl_buffer_edge;
     GLuint gl_varray;
@@ -220,10 +233,12 @@ void setup_sdl_and_gl (global_state& state) {
     SDL_GL_SetAttribute (SDL_GL_RED_SIZE, 8);
     SDL_GL_SetAttribute (SDL_GL_GREEN_SIZE, 8);
     SDL_GL_SetAttribute (SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute (SDL_GL_ALPHA_SIZE, 8);
+    SDL_GL_SetAttribute (SDL_GL_ALPHA_SIZE, 0);
     SDL_GL_SetAttribute (SDL_GL_DEPTH_SIZE, 32);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+    SDL_GL_SetAttribute (SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute (SDL_GL_MULTISAMPLESAMPLES, 16);
     
     state.pContext = SDL_GL_CreateContext (state.pWindow);
     SDL_GL_MakeCurrent (state.pWindow, state.pContext);
@@ -267,10 +282,8 @@ bool drain_mouse_events (global_state& state) {
         timeout:0
            mode:NSEventTrackingRunLoopMode
         handler:^(NSEvent * _Nonnull event, BOOL * _Nonnull stop) {
-//            if ([event type] == NSMouseMoved) {
-                handle_mouse_event(state, [event deltaX], [event deltaY]);
-                didHandleEvent = true;
-//            }
+            handle_mouse_event(state, [event deltaX], [event deltaY]);
+            didHandleEvent = true;
             *stop = YES;
         }
     ];
@@ -355,65 +368,70 @@ void teardown_gl_resources (global_state& state) {
 void build_gl_resources (global_state& state) {
     auto& map_data = *state.map_data;
     
+    std::vector<xtk::quake2::bsp_vertex_attribute> buff;
+    xtk::quake2::build_bsp_faces (buff, map_data);
+    
     glGenBuffers (1u, &state.gl_buffer_vertex);
     glBindBuffer (GL_ARRAY_BUFFER, state.gl_buffer_vertex);
-    glBufferData (GL_ARRAY_BUFFER,
-        map_data.vertexes.length()*sizeof (map_data.vertexes [0]),
-        map_data.vertexes.begin (),
-        GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, buff.size()* sizeof (buff [0]), buff.data(), GL_STATIC_DRAW);
     
-    CHECK();
-    
-    glGenBuffers (1u, &state.gl_buffer_edge);
-    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, state.gl_buffer_edge);
-    glBufferData (GL_ELEMENT_ARRAY_BUFFER,
-        map_data.edges.length ()*sizeof (map_data.edges [0]),
-        map_data.edges.begin (),
-        GL_STATIC_DRAW);
-	
-	CHECK();
-	
     glGenVertexArrays (1u, &state.gl_varray);
     glBindVertexArray (state.gl_varray);
-    glEnableVertexAttribArray (0u);
-//    glEnableVertexAttribArray (1u);
-    glBindBuffer (GL_ARRAY_BUFFER, state.gl_buffer_vertex);
-    glVertexAttribPointer (0u, 3u, GL_FLOAT, GL_FALSE, sizeof (glm::vec3), nullptr);
-//    glVertexAttribPointer (1u, 3u, GL_FLOAT, GL_FALSE, sizeof (glm::vec3), &reinterpret_cast<const vInput*>(0u)->color);
 
-    CHECK();
+    glEnableVertexAttribArray (0u);
+    glEnableVertexAttribArray (1u);
+    glEnableVertexAttribArray (2u);
+    glEnableVertexAttribArray (3u);
+
+    auto tempor = reinterpret_cast<const xtk::quake2::bsp_vertex_attribute*>(0);
+    auto stride = (GLsizei)sizeof (xtk::quake2::bsp_vertex_attribute);
+    
+    glVertexAttribPointer (0u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->vertex);
+    glVertexAttribPointer (1u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->normal);
+    glVertexAttribPointer (2u, 2u, GL_FLOAT, GL_FALSE, stride, &tempor->uv_tex);
+    glVertexAttribPointer (3u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->color);
+    
+    state.gl_element_count = (GLsizei)buff.size();
+    CHECK ();
+    
+    for (const auto& tex: map_data.texture_info) {
+        char buffer [33] = {0};
+        
+        std::strncpy (buffer, tex.texture_name, 32);
+        
+        xtk::Debug::log ("%s\n", buffer);
+    }
+    
 }
 
 void setup_glsl_program (global_state& state) {
     std::string outLog;
     state.gl_program = build_gl_shaders ({
-            {GL_VERTEX_SHADER,
-				__basic_vertex_source},
-            {GL_FRAGMENT_SHADER,
-				__basic_fragment_source}
-        }, outLog);
-    
+        {GL_VERTEX_SHADER, __basic_vertex_source},
+        {GL_FRAGMENT_SHADER, __basic_fragment_source}},
+        outLog);
     
     if (!state.gl_program) {
         xtk::Debug::log ("%s\n", outLog.c_str ());
     }
     
     glUseProgram (state.gl_program);
-
     glUniform3f (glGetUniformLocation (state.gl_program, "g_constant_color"), 1.0f, 1.0f, 1.0f);
-    glUniform3f (glGetUniformLocation (state.gl_program, "g_color_mix"), 0.5f, 0.5f, 0.0f);
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
     
     CHECK();
 }
 
 void update_uniforms (global_state& state) {
-	auto g_projection_matrix = glm::perspective (45.0f, 16.0f/9.0f, 0.001f, 10000.0f);
-		
+	auto g_projection_matrix = glm::perspective (45.0f, 16.0f/9.0f, 1.0f, 10000.0f);
+    auto g_model_matrix = glm::mat4 (1.0);
 	auto g_view_matrix = glm::lookAt (state.player_position, state.player_position + state.player_forward, state.player_upwards);
-	auto g_model_view_projection = g_projection_matrix * g_view_matrix;
+	auto g_model_view_projection = g_projection_matrix * g_view_matrix * g_model_matrix;
+    auto g_normal_matrix = glm::transpose (glm::inverse (glm::mat3 (g_view_matrix * g_model_matrix)));
         
-    glUniformMatrix4fv (glGetUniformLocation (state.gl_program, "g_model_view_projection"), 1u, GL_FALSE, &g_model_view_projection[0][0]);
-    
+    glUniformMatrix4fv (glGetUniformLocation (state.gl_program, "g_model_view_projection"), 1u, GL_FALSE, &g_model_view_projection [0][0]);
+    glUniformMatrix3fv (glGetUniformLocation (state.gl_program, "g_normal_matrix"), 1u, GL_FALSE, &g_normal_matrix [0][0]);
+
     CHECK();
 }
 
@@ -425,9 +443,20 @@ void draw_frame (global_state& state) {
     
     CHECK();
     
-    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, state.gl_buffer_edge);
-    glDrawElements (GL_LINES, (GLsizei)map_data.edges.length ()*2, GL_UNSIGNED_SHORT, nullptr);
-    //glDrawArrays (GL_LINE_STRIP, 0, (GLsizei)map_data.vertexes.length());
+    glEnable (GL_DEPTH_TEST);
+    glEnable (GL_CULL_FACE);
+    glCullFace (GL_BACK);
+    glFrontFace (GL_CW);
+    
+//    glPolygonOffset (-50.0f, -50.0f);
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
+    glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+    glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
+    
+//    glPolygonOffset (50.0f, 50.0f);
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 0.0f);
+    glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
     
     CHECK();
 
