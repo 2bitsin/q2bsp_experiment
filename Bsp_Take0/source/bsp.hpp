@@ -13,6 +13,10 @@
 
 #include "bsp_structs.hpp"
 #include "array_view.hpp"
+#include "pcx.hpp"
+#include "wal.hpp"
+#include "pakman.hpp"
+
 
 namespace xtk {
     /*
@@ -57,6 +61,36 @@ namespace xtk {
         void build_bsp_faces (std::vector<bsp_vertex_attribute>& buffer, const bsp_data_quake2& bsp);
     }
     */
+    
+    struct bsp_data {
+        struct vertex_attribute {
+    
+            inline vertex_attribute (
+                const bsp_point3f& _1 = bsp_point3f (),
+                const bsp_point3f& _2 = bsp_point3f (),
+                const bsp_point3f& _3 = bsp_point3f (),
+                const bsp_point3f& _4 = bsp_point3f ())
+            noexcept:
+                vertex (_1),
+                normal (_2),
+                uv_tex (_3),
+                color  (_4)
+            {}
+            
+            bsp_point3f vertex;
+            bsp_point3f normal;
+            bsp_point3f uv_tex;
+            bsp_point3f color;
+        };
+        
+        std::vector<vertex_attribute> vertexes;
+        std::vector<wal_bitmap> textures;
+            
+//        std::vector<bitmap> lightmaps;
+    };
+    
+    bsp_data bsp_decode (pakman& pak, const std::string& name);
+    
 }
 
 #endif /* bsp_hpp */

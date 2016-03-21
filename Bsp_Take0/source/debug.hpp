@@ -22,7 +22,10 @@ namespace xtk {
     #define XTK_DEBUG 1
         
     #if XTK_DEBUG
-        #define __xtk_assert(Y, X) if (!(X)) throw Y ("failed assertion: " #X)
+        #define __xtk_assert(Y, X) if (!(X)) {\
+            __builtin_trap ();\
+            throw Y ("failed assertion: " #X);\
+        }
         #define __xtk_noexcept_if_nodebug
     #else
         #define __xtk_assert(Y, X)

@@ -85,7 +85,7 @@ void pakman::mount (const std::string& name, const std::string& prefix) {
         (const pak_resource*)(file_view.begin () + header.offset + header.length)
     };
     
-    xtk::Debug::log("Mounting %s ... size: %llu\n", name.c_str(), (std::uint64_t)st.st_size);
+//    xtk::Debug::log("Mounting %s ... size: %llu\n", name.c_str(), (std::uint64_t)st.st_size);
     for (const auto& direntry : directory_view) {
         auto resource_name = std::string (direntry.name, strnlen (direntry.name, 56));
         
@@ -97,12 +97,12 @@ void pakman::mount (const std::string& name, const std::string& prefix) {
         auto id = prefix + resource_name;
         auto it = m_resource.find (id);
         if (it != m_resource.end ()) {
-            xtk::Debug::log ("Warning `%s` already mounted, skipping\n", id.c_str ());
+//            xtk::Debug::log ("Warning `%s` already mounted, skipping\n", id.c_str ());
             continue;
         }
         
         m_resource.insert ({id, {0, resource_view}});
-        xtk::Debug::log("\tadding %s ... size: %llu\n", id.c_str (), (std::uint64_t)direntry.length);
+//        xtk::Debug::log("\tadding %s ... size: %llu\n", id.c_str (), (std::uint64_t)direntry.length);
     }
 }
 

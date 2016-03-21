@@ -6,9 +6,8 @@
 //  Copyright © 2016 Aleksandr Ševčenko. All rights reserved.
 //
 
-//#include "bsp.hpp"
 #include "debug.hpp"
-#include "pcx.hpp"
+#include "bsp.hpp"
 #include "pakman.hpp"
 
 #include <string>
@@ -16,6 +15,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 #include <unordered_map>
 
 #include <SDL2/SDL.h>
@@ -46,15 +46,16 @@ char __basic_vertex_source [] = R"(
     uniform mat3 g_normal_matrix;
     uniform vec3 g_constant_color;
     uniform float g_constant_alpha;
+    uniform sampler2DArray g_texture_array;
 
     layout (location = 0) in vec3 vs_vertex_position;
     layout (location = 1) in vec3 vs_vertex_normal;
-    layout (location = 2) in vec2 vs_vertex_uv_tex;
+    layout (location = 2) in vec3 vs_vertex_uv_tex;
     layout (location = 3) in vec3 vs_vertex_color;
 
     out vec4 fs_vertex_position;
     out vec3 fs_vertex_normal;
-    out vec2 fs_vertex_uv_tex;
+    out vec3 fs_vertex_uv_tex;
     out vec3 fs_vertex_color;
 
     void main () {
@@ -78,16 +79,19 @@ char __basic_fragment_source [] = R"(
     uniform mat3 g_normal_matrix;
     uniform vec3 g_constant_color;
     uniform float g_constant_alpha;
+    uniform sampler2DArray g_texture_array;
 
     in vec4 fs_vertex_position;
     in vec3 fs_vertex_normal;
-    in vec2 fs_vertex_uv_tex;
+    in vec3 fs_vertex_uv_tex;
     in vec3 fs_vertex_color;
 
     layout (location = 0) out vec4 out_fragment_color;
 
     void main () {
-        out_fragment_color = vec4 (mix (fs_vertex_color, 1.0 - fs_vertex_color, g_constant_alpha), 1.0f);
+        vec3 color = texture2D (g_texture_array, fs_vertex_uv_tex);
+        //vec3 color = vec3(1.0f);
+        out_fragment_color = vec4 (mix (color, fs_vertex_color, g_constant_alpha), 1.0f);
     }
 )";
 
@@ -96,7 +100,7 @@ struct global_state {
     SDL_GLContext pContext;
     NSWindow* pCocoaWindow;
     
-    //xtk::bsp_data_quake2* map_data;
+    const xtk::bsp_data* map_data;
     
     double last_timestamp;
     double last_deltatime;
@@ -106,6 +110,7 @@ struct global_state {
     GLuint gl_buffer_edge;
     GLuint gl_varray;
     GLuint gl_program;
+    GLuint gl_textures;
     
     glm::vec3 player_velocity;
     glm::vec3 player_position;
@@ -173,12 +178,16 @@ GLuint build_gl_shaders (const std::initializer_list<std::pair<GLenum, std::stri
         glCompileShader(uObject);
         
         glGetShaderiv (uObject, GL_COMPILE_STATUS, &param);
+        CHECK ();
+        
         if (!param) {
             glGetShaderiv (uObject, GL_INFO_LOG_LENGTH, &param);
             auto infoLog = std::make_unique<GLchar []> (param + 1);
             glGetShaderInfoLog (uObject, param + 1, &param, infoLog.get ());
             
             glDeleteShader (uObject);
+            
+            CHECK ();
             
             log.append ("\nShader compile error: \n");
             log.append (annotate_shader_source (sSource, infoLog.get()));
@@ -193,6 +202,8 @@ GLuint build_gl_shaders (const std::initializer_list<std::pair<GLenum, std::stri
     
     glLinkProgram (uProgram);
     glGetProgramiv (uProgram, GL_LINK_STATUS, &param);
+    CHECK ();
+    
     if (!param) {
         glGetProgramiv (uProgram, GL_INFO_LOG_LENGTH, &param);
         auto infoLog = std::make_unique<GLchar []> (param + 1);
@@ -200,13 +211,15 @@ GLuint build_gl_shaders (const std::initializer_list<std::pair<GLenum, std::stri
         
         glDeleteProgram (uProgram);
         
+        CHECK ();
+
         log.append ("\nProgram link error: \n");
         log.append (infoLog.get ());
         log.append ("\n");
         
         return 0u;
     }
-    
+    CHECK ();
     return uProgram;
 }
 
@@ -369,16 +382,27 @@ void teardown_gl_resources (global_state& state) {
     CHECK();
 }
 
+void stretch (const xtk::bitmap& _input, xtk::bitmap::value_type* buffer, std::size_t w, std::size_t h) {
+    auto dx = _input.width () / (1.0f*w);
+    auto dy = _input.height () / (1.0f*h);
+
+    for (auto y = 0; y < h; ++y) {
+        for (auto x = 0; x < w; ++x) {
+            buffer [w*y + x] = _input ((int)std::floor (x*dx),
+                                       (int)std::floor (y*dy));
+        }
+    }
+}
+
 void build_gl_resources (global_state& state) {
-/*
-    auto& map_data = *state.map_data;
-    
-    std::vector<xtk::quake2::bsp_vertex_attribute> buff;
-    xtk::quake2::build_bsp_faces (buff, map_data);
+
+    const auto& map_data = *state.map_data;
+    const auto& vertexes = map_data.vertexes;
+    const auto& textures = map_data.textures;
     
     glGenBuffers (1u, &state.gl_buffer_vertex);
     glBindBuffer (GL_ARRAY_BUFFER, state.gl_buffer_vertex);
-    glBufferData (GL_ARRAY_BUFFER, buff.size()* sizeof (buff [0]), buff.data(), GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, vertexes.size() * sizeof (vertexes [0]), vertexes.data(), GL_STATIC_DRAW);
     
     glGenVertexArrays (1u, &state.gl_varray);
     glBindVertexArray (state.gl_varray);
@@ -388,29 +412,44 @@ void build_gl_resources (global_state& state) {
     glEnableVertexAttribArray (2u);
     glEnableVertexAttribArray (3u);
 
-    auto tempor = reinterpret_cast<const xtk::quake2::bsp_vertex_attribute*>(0);
-    auto stride = (GLsizei)sizeof (xtk::quake2::bsp_vertex_attribute);
+    auto tempor = reinterpret_cast<const xtk::bsp_data::vertex_attribute*>(0);
+    auto stride = (GLsizei)sizeof (xtk::bsp_data::vertex_attribute);
     
     glVertexAttribPointer (0u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->vertex);
     glVertexAttribPointer (1u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->normal);
-    glVertexAttribPointer (2u, 2u, GL_FLOAT, GL_FALSE, stride, &tempor->uv_tex);
+    glVertexAttribPointer (2u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->uv_tex);
     glVertexAttribPointer (3u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->color);
     
-    state.gl_element_count = (GLsizei)buff.size();
+    state.gl_element_count = (GLsizei)vertexes.size();
     CHECK ();
+
+    auto maxw = 0ul;
+    auto maxh = 0ul;
     
-    for (const auto& tex: map_data.texture_info) {
-        char buffer [33] = {0};
-        
-        std::strncpy (buffer, tex.texture_name, 32);
-        
-        xtk::Debug::log ("%s\n", buffer);
+    for (const auto& tex: textures) {
+        maxw = std::max (maxw, tex.miptex [0].width ());
+        maxh = std::max (maxh, tex.miptex [0].height ());
     }
-    */
+    
+    auto buffer = std::make_unique<xtk::bitmap::value_type []> (maxw * maxh * textures.size ());
+    
+    for (auto i = 0u; i < textures.size (); ++i) {
+        stretch (textures [i].miptex [0], &buffer [i*maxw*maxh], maxw, maxh);
+    }
+    
+    glGenTextures (1u, &state.gl_textures);
+    glBindTexture (GL_TEXTURE_2D_ARRAY, state.gl_textures);
+    glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexImage3D (GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, (GLsizei)maxw, (GLsizei)maxh, (GLsizei)textures.size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get ());
+    glGenerateMipmap (GL_TEXTURE_2D_ARRAY);
+    
+    CHECK();
 }
 
 void setup_glsl_program (global_state& state) {
     std::string outLog;
+    xtk::Debug::log ("Loading shaders...\n");
     state.gl_program = build_gl_shaders ({
         {GL_VERTEX_SHADER, __basic_vertex_source},
         {GL_FRAGMENT_SHADER, __basic_fragment_source}},
@@ -453,12 +492,20 @@ void draw_frame (global_state& state) {
     glCullFace (GL_BACK);
     glFrontFace (GL_CW);
     
-//    glPolygonOffset (-50.0f, -50.0f);
+    CHECK ();
+    
+    glBindTexture (GL_TEXTURE_2D_ARRAY, state.gl_textures);
     glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
+    glUniform1i (glGetUniformLocation (state.gl_program, "g_texture_array"), 0);
+    
+    CHECK ();
+    
+    glBindVertexArray (state.gl_varray);
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
     glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
     
-//    glPolygonOffset (50.0f, 50.0f);
+    CHECK ();
+    
     glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 0.0f);
     glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
     glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
@@ -467,8 +514,6 @@ void draw_frame (global_state& state) {
 
 }
 
-#include <fstream>
-#include "wal.hpp"
 
 int main (int argc, const char* argv []) try {
     global_state context;
@@ -479,34 +524,9 @@ int main (int argc, const char* argv []) try {
     pack_manager.mount ("data/pak1.pak");
     pack_manager.mount ("data/pak0.pak");
     
-    xtk::pakman_lock colormap_lock (pack_manager, "pics/colormap.pcx");
-    xtk::pakman_lock texture_lock (pack_manager, "textures/e2u3/metal3_1.wal");
+    auto map_data = xtk::bsp_decode (pack_manager, "maps/q2dm1.bsp");
     
- 
-    auto pcx = xtk::pcx_decode (*colormap_lock);
-    auto wal = xtk::wal_decode (*texture_lock, xtk::array_view<xtk::bitmap::value_type> {pcx.data (), pcx.data () + pcx.width ()});
-    
-    for (auto i = 0; i < 4; ++i) {
-        std::ofstream obin (("dump" + std::to_string (i) + ".raw").c_str (), std::ios::binary);
-        obin.write ((const char* )wal.miptex [i].data (),
-            wal.miptex [i].width()*
-            wal.miptex [i].height()*
-            sizeof (xtk::bitmap::value_type));
-    }
-    
-    return 0;
-    
-/*
-    std::ifstream ifs ("data/maps/q2dm1.bsp", std::ios::binary);
-    
-    if (!ifs) {
-        std::cout << "Couldn't open file!\n";
-        return -1;
-    }
-    
-    xtk::bsp_data_quake2 map_data (xtk::fetch_data (std::move (ifs)));
     context.map_data = &map_data;
-*/
     
     setup_sdl_and_gl (context);
     build_gl_resources(context);

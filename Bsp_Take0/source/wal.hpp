@@ -17,6 +17,7 @@
 #include "bitmap.hpp"
 
 namespace xtk {
+
     struct wal_bitmap {
         bitmap miptex [4];
         std::string name;
