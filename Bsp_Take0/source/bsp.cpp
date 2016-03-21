@@ -134,7 +134,7 @@ bsp_data xtk::bsp_decode (pakman& pak, const std::string& name) {
             avg += vx1;
         }
         
-        auto auv = bsp_point3f (uv_from_face (avg *= div, texinfo, texw, texh), 1.0f);
+        auto auv = bsp_point3f (uv_from_face (avg *= div, texinfo, texw, texh), texid);
         
         temp.emplace_back (avg, normal, auv, bsp_point3f {1.0f});
         

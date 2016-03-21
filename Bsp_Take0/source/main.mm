@@ -89,9 +89,8 @@ char __basic_fragment_source [] = R"(
     layout (location = 0) out vec4 out_fragment_color;
 
     void main () {
-        vec3 color = texture2D (g_texture_array, fs_vertex_uv_tex);
-        //vec3 color = vec3(1.0f);
-        out_fragment_color = vec4 (mix (color, fs_vertex_color, g_constant_alpha), 1.0f);
+        vec3 color = texture (g_texture_array, fs_vertex_uv_tex).rgb;
+        out_fragment_color = vec4 (mix (fs_vertex_color, color, g_constant_alpha), 1.0f);
     }
 )";
 
