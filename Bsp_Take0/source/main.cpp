@@ -9,6 +9,7 @@
 #include "debug.hpp"
 #include "bsp.hpp"
 #include "pakman.hpp"
+#include "cocoa_mouse_workaround.hpp"
 
 #include <string>
 #include <regex>
@@ -19,7 +20,6 @@
 #include <unordered_map>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
 
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
@@ -27,9 +27,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/ext.hpp>
-
-#import <Foundation/Foundation.h>
-#import <Cocoa/Cocoa.h>
 
 #define CHECK()\
 if (auto error = glGetError()) {\
@@ -97,7 +94,6 @@ char __basic_fragment_source [] = R"(
 struct global_state {
     SDL_Window* pWindow;
     SDL_GLContext pContext;
-    NSWindow* pCocoaWindow;
     
     const xtk::bsp_data* map_data;
     
@@ -258,11 +254,6 @@ void setup_sdl_and_gl (global_state& state) {
     
     state.pContext = SDL_GL_CreateContext (state.pWindow);
     SDL_GL_MakeCurrent (state.pWindow, state.pContext);
- 
-    SDL_SysWMinfo wmInfo;
-    std::memset (&wmInfo, 0, sizeof (wmInfo));
-    SDL_GetWindowWMInfo (state.pWindow, &wmInfo);
-    state.pCocoaWindow = wmInfo.info.cocoa.window;
     
     SDL_SetRelativeMouseMode (SDL_TRUE);
     
@@ -292,19 +283,7 @@ void handle_mouse_event (global_state& state, int idx, int idy) {
     state.player_upwards = glm::normalize (glm::cross (state.player_forward, state.player_sideways));
 }
 
-bool drain_mouse_events (global_state& state) {
-    __block bool didHandleEvent = false;
-    [state.pCocoaWindow trackEventsMatchingMask:NSMouseMovedMask|NSLeftMouseDraggedMask|NSRightMouseDraggedMask
-        timeout:0
-           mode:NSEventTrackingRunLoopMode
-        handler:^(NSEvent * _Nonnull event, BOOL * _Nonnull stop) {
-            handle_mouse_event(state, [event deltaX], [event deltaY]);
-            didHandleEvent = true;
-            *stop = YES;
-        }
-    ];
-    return didHandleEvent;
-}
+
 
 void handle_keyboard_event (global_state& state) {
 
@@ -347,13 +326,20 @@ bool execute_run_loop (global_state& state) {
     SDL_Event pEvent;
     SDL_GL_SwapWindow (state.pWindow);
     
-    drain_mouse_events (state);
+    #ifdef __APPLE__
+    cocoa_drain_mouse_events (state.pWindow, [&state] (int dx, int dy){
+        handle_mouse_event (state, dx, dy);
+    });
+    #endif
     
     while (SDL_PollEvent (&pEvent)) {
         if (SDL_QuitRequested())
             return false;
         
         switch (pEvent.type) {
+            SDL_MOUSEMOTION:
+                handle_mouse_event(state, pEvent.motion.xrel, pEvent.motion.yrel);
+                break;
             SDL_KEYDOWN:
             SDL_KEYUP:
                 break;
