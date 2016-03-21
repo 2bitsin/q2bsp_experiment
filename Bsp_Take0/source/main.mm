@@ -6,14 +6,16 @@
 //  Copyright © 2016 Aleksandr Ševčenko. All rights reserved.
 //
 
-
-#include "file_utils.hpp"
-#include "bsp.hpp"
 #include "debug.hpp"
+#include "bsp.hpp"
+#include "pakman.hpp"
 
 #include <string>
-#include <sstream>
 #include <regex>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
 #include <unordered_map>
 
 #include <SDL2/SDL.h>
@@ -41,17 +43,29 @@ char __basic_vertex_source [] = R"(
     #version 410
 
     uniform mat4 g_model_view_projection;
-    uniform vec3 g_color_mix;
+    uniform mat3 g_normal_matrix;
     uniform vec3 g_constant_color;
+    uniform float g_constant_alpha;
+    uniform sampler2DArray g_texture_array;
 
     layout (location = 0) in vec3 vs_vertex_position;
-    layout (location = 1) in vec3 vs_vertex_color;
+    layout (location = 1) in vec3 vs_vertex_normal;
+    layout (location = 2) in vec3 vs_vertex_uv_tex;
+    layout (location = 3) in vec3 vs_vertex_color;
 
+    out vec4 fs_vertex_position;
+    out vec3 fs_vertex_normal;
+    out vec3 fs_vertex_uv_tex;
     out vec3 fs_vertex_color;
 
     void main () {
+        fs_vertex_position = g_model_view_projection * vec4 (vs_vertex_position, 1.0);
+        fs_vertex_normal = g_normal_matrix * vs_vertex_position;
+        fs_vertex_uv_tex = vs_vertex_uv_tex;
         fs_vertex_color = vs_vertex_color;
-        gl_Position = g_model_view_projection * vec4 (vs_vertex_position, 1.0);
+        
+        gl_Position = fs_vertex_position;
+        
     }
 )";
 
@@ -62,18 +76,21 @@ char __basic_fragment_source [] = R"(
     #version 410
 
     uniform mat4 g_model_view_projection;
-    uniform vec3 g_color_mix;
+    uniform mat3 g_normal_matrix;
     uniform vec3 g_constant_color;
+    uniform float g_constant_alpha;
+    uniform sampler2DArray g_texture_array;
 
+    in vec4 fs_vertex_position;
+    in vec3 fs_vertex_normal;
+    in vec3 fs_vertex_uv_tex;
     in vec3 fs_vertex_color;
 
     layout (location = 0) out vec4 out_fragment_color;
 
     void main () {
-        out_fragment_color = vec4 (
-            g_color_mix.x*g_constant_color +
-            g_color_mix.y*fs_vertex_color,
-            1.0);
+        vec3 color = texture (g_texture_array, fs_vertex_uv_tex).rgb;
+        out_fragment_color = vec4 (mix (fs_vertex_color, color, g_constant_alpha), 1.0f);
     }
 )";
 
@@ -82,15 +99,17 @@ struct global_state {
     SDL_GLContext pContext;
     NSWindow* pCocoaWindow;
     
-    xtk::bsp_data_quake2* map_data;
+    const xtk::bsp_data* map_data;
     
     double last_timestamp;
     double last_deltatime;
-    
+        
+    GLsizei gl_element_count;
     GLuint gl_buffer_vertex;
     GLuint gl_buffer_edge;
     GLuint gl_varray;
     GLuint gl_program;
+    GLuint gl_textures;
     
     glm::vec3 player_velocity;
     glm::vec3 player_position;
@@ -120,6 +139,7 @@ std::string annotate_shader_source (const std::string& source, const std::string
             }
         }
     }
+    
     iss.clear ();
     iss.str (source);
     oss << std::setfill(' ');
@@ -157,12 +177,16 @@ GLuint build_gl_shaders (const std::initializer_list<std::pair<GLenum, std::stri
         glCompileShader(uObject);
         
         glGetShaderiv (uObject, GL_COMPILE_STATUS, &param);
+        CHECK ();
+        
         if (!param) {
             glGetShaderiv (uObject, GL_INFO_LOG_LENGTH, &param);
             auto infoLog = std::make_unique<GLchar []> (param + 1);
             glGetShaderInfoLog (uObject, param + 1, &param, infoLog.get ());
             
             glDeleteShader (uObject);
+            
+            CHECK ();
             
             log.append ("\nShader compile error: \n");
             log.append (annotate_shader_source (sSource, infoLog.get()));
@@ -177,6 +201,8 @@ GLuint build_gl_shaders (const std::initializer_list<std::pair<GLenum, std::stri
     
     glLinkProgram (uProgram);
     glGetProgramiv (uProgram, GL_LINK_STATUS, &param);
+    CHECK ();
+    
     if (!param) {
         glGetProgramiv (uProgram, GL_INFO_LOG_LENGTH, &param);
         auto infoLog = std::make_unique<GLchar []> (param + 1);
@@ -184,17 +210,20 @@ GLuint build_gl_shaders (const std::initializer_list<std::pair<GLenum, std::stri
         
         glDeleteProgram (uProgram);
         
+        CHECK ();
+
         log.append ("\nProgram link error: \n");
         log.append (infoLog.get ());
         log.append ("\n");
         
         return 0u;
     }
-    
+    CHECK ();
     return uProgram;
 }
 
 void setup_sdl_and_gl (global_state& state) {
+
     SDL_LogSetOutputFunction (SDL_LogOutputFunction ([] (
         void*           userdata,
         int             category,
@@ -220,10 +249,12 @@ void setup_sdl_and_gl (global_state& state) {
     SDL_GL_SetAttribute (SDL_GL_RED_SIZE, 8);
     SDL_GL_SetAttribute (SDL_GL_GREEN_SIZE, 8);
     SDL_GL_SetAttribute (SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute (SDL_GL_ALPHA_SIZE, 8);
+    SDL_GL_SetAttribute (SDL_GL_ALPHA_SIZE, 0);
     SDL_GL_SetAttribute (SDL_GL_DEPTH_SIZE, 32);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+    SDL_GL_SetAttribute (SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute (SDL_GL_MULTISAMPLESAMPLES, 16);
     
     state.pContext = SDL_GL_CreateContext (state.pWindow);
     SDL_GL_MakeCurrent (state.pWindow, state.pContext);
@@ -267,10 +298,8 @@ bool drain_mouse_events (global_state& state) {
         timeout:0
            mode:NSEventTrackingRunLoopMode
         handler:^(NSEvent * _Nonnull event, BOOL * _Nonnull stop) {
-//            if ([event type] == NSMouseMoved) {
-                handle_mouse_event(state, [event deltaX], [event deltaY]);
-                didHandleEvent = true;
-//            }
+            handle_mouse_event(state, [event deltaX], [event deltaY]);
+            didHandleEvent = true;
             *stop = YES;
         }
     ];
@@ -352,100 +381,151 @@ void teardown_gl_resources (global_state& state) {
     CHECK();
 }
 
+void stretch (const xtk::bitmap& _input, xtk::bitmap::value_type* buffer, std::size_t w, std::size_t h) {
+    auto dx = _input.width () / (1.0f*w);
+    auto dy = _input.height () / (1.0f*h);
+
+    for (auto y = 0; y < h; ++y) {
+        for (auto x = 0; x < w; ++x) {
+            buffer [w*y + x] = _input ((int)std::floor (x*dx),
+                                       (int)std::floor (y*dy));
+        }
+    }
+}
+
 void build_gl_resources (global_state& state) {
-    auto& map_data = *state.map_data;
+
+    const auto& map_data = *state.map_data;
+    const auto& vertexes = map_data.vertexes;
+    const auto& textures = map_data.textures;
     
     glGenBuffers (1u, &state.gl_buffer_vertex);
     glBindBuffer (GL_ARRAY_BUFFER, state.gl_buffer_vertex);
-    glBufferData (GL_ARRAY_BUFFER,
-        map_data.vertexes.length()*sizeof (map_data.vertexes [0]),
-        map_data.vertexes.begin (),
-        GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, vertexes.size() * sizeof (vertexes [0]), vertexes.data(), GL_STATIC_DRAW);
     
-    CHECK();
-    
-    glGenBuffers (1u, &state.gl_buffer_edge);
-    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, state.gl_buffer_edge);
-    glBufferData (GL_ELEMENT_ARRAY_BUFFER,
-        map_data.edges.length ()*sizeof (map_data.edges [0]),
-        map_data.edges.begin (),
-        GL_STATIC_DRAW);
-	
-	CHECK();
-	
     glGenVertexArrays (1u, &state.gl_varray);
     glBindVertexArray (state.gl_varray);
-    glEnableVertexAttribArray (0u);
-//    glEnableVertexAttribArray (1u);
-    glBindBuffer (GL_ARRAY_BUFFER, state.gl_buffer_vertex);
-    glVertexAttribPointer (0u, 3u, GL_FLOAT, GL_FALSE, sizeof (glm::vec3), nullptr);
-//    glVertexAttribPointer (1u, 3u, GL_FLOAT, GL_FALSE, sizeof (glm::vec3), &reinterpret_cast<const vInput*>(0u)->color);
 
+    glEnableVertexAttribArray (0u);
+    glEnableVertexAttribArray (1u);
+    glEnableVertexAttribArray (2u);
+    glEnableVertexAttribArray (3u);
+
+    auto tempor = reinterpret_cast<const xtk::bsp_data::vertex_attribute*>(0);
+    auto stride = (GLsizei)sizeof (xtk::bsp_data::vertex_attribute);
+    
+    glVertexAttribPointer (0u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->vertex);
+    glVertexAttribPointer (1u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->normal);
+    glVertexAttribPointer (2u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->uv_tex);
+    glVertexAttribPointer (3u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->color);
+    
+    state.gl_element_count = (GLsizei)vertexes.size();
+    CHECK ();
+
+    auto maxw = 0ul;
+    auto maxh = 0ul;
+    
+    for (const auto& tex: textures) {
+        maxw = std::max (maxw, tex.miptex [0].width ());
+        maxh = std::max (maxh, tex.miptex [0].height ());
+    }
+    
+    auto buffer = std::make_unique<xtk::bitmap::value_type []> (maxw * maxh * textures.size ());
+    
+    for (auto i = 0u; i < textures.size (); ++i) {
+        stretch (textures [i].miptex [0], &buffer [i*maxw*maxh], maxw, maxh);
+    }
+    
+    glGenTextures (1u, &state.gl_textures);
+    glBindTexture (GL_TEXTURE_2D_ARRAY, state.gl_textures);
+    glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexImage3D (GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, (GLsizei)maxw, (GLsizei)maxh, (GLsizei)textures.size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get ());
+    glGenerateMipmap (GL_TEXTURE_2D_ARRAY);
+    
     CHECK();
 }
 
 void setup_glsl_program (global_state& state) {
     std::string outLog;
+    xtk::Debug::log ("Loading shaders...\n");
     state.gl_program = build_gl_shaders ({
-            {GL_VERTEX_SHADER,
-				__basic_vertex_source},
-            {GL_FRAGMENT_SHADER,
-				__basic_fragment_source}
-        }, outLog);
-    
+        {GL_VERTEX_SHADER, __basic_vertex_source},
+        {GL_FRAGMENT_SHADER, __basic_fragment_source}},
+        outLog);
     
     if (!state.gl_program) {
         xtk::Debug::log ("%s\n", outLog.c_str ());
     }
     
     glUseProgram (state.gl_program);
-
     glUniform3f (glGetUniformLocation (state.gl_program, "g_constant_color"), 1.0f, 1.0f, 1.0f);
-    glUniform3f (glGetUniformLocation (state.gl_program, "g_color_mix"), 0.5f, 0.5f, 0.0f);
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
     
     CHECK();
 }
 
 void update_uniforms (global_state& state) {
-	auto g_projection_matrix = glm::perspective (45.0f, 16.0f/9.0f, 0.001f, 10000.0f);
-		
+	auto g_projection_matrix = glm::perspective (45.0f, 16.0f/9.0f, 1.0f, 10000.0f);
+    auto g_model_matrix = glm::mat4 (1.0);
 	auto g_view_matrix = glm::lookAt (state.player_position, state.player_position + state.player_forward, state.player_upwards);
-	auto g_model_view_projection = g_projection_matrix * g_view_matrix;
+	auto g_model_view_projection = g_projection_matrix * g_view_matrix * g_model_matrix;
+    auto g_normal_matrix = glm::transpose (glm::inverse (glm::mat3 (g_view_matrix * g_model_matrix)));
         
-    glUniformMatrix4fv (glGetUniformLocation (state.gl_program, "g_model_view_projection"), 1u, GL_FALSE, &g_model_view_projection[0][0]);
-    
+    glUniformMatrix4fv (glGetUniformLocation (state.gl_program, "g_model_view_projection"), 1u, GL_FALSE, &g_model_view_projection [0][0]);
+    glUniformMatrix3fv (glGetUniformLocation (state.gl_program, "g_normal_matrix"), 1u, GL_FALSE, &g_normal_matrix [0][0]);
+
     CHECK();
 }
 
 void draw_frame (global_state& state) {
-    auto& map_data = *state.map_data;
+//    auto& map_data = *state.map_data;
     
     glClearColor (0.0f, 0.25f, 0.0f, 1.0f);
     glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
     CHECK();
     
-    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, state.gl_buffer_edge);
-    glDrawElements (GL_LINES, (GLsizei)map_data.edges.length ()*2, GL_UNSIGNED_SHORT, nullptr);
-    //glDrawArrays (GL_LINE_STRIP, 0, (GLsizei)map_data.vertexes.length());
+    glEnable (GL_DEPTH_TEST);
+    glEnable (GL_CULL_FACE);
+    glCullFace (GL_BACK);
+    glFrontFace (GL_CW);
     
+    CHECK ();
+    
+    glBindTexture (GL_TEXTURE_2D_ARRAY, state.gl_textures);
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
+    glUniform1i (glGetUniformLocation (state.gl_program, "g_texture_array"), 0);
+    
+    CHECK ();
+    
+    glBindVertexArray (state.gl_varray);
+    glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+    glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
+    
+    CHECK ();
+/*
+    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 0.0f);
+    glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
+*/    
     CHECK();
 
 }
 
+
 int main (int argc, const char* argv []) try {
     global_state context;
     
-    std::ifstream ifs ("data/maps/q2dm1.bsp", std::ios::binary);
+    xtk::pakman& pack_manager = xtk::pakman::shared();
     
-    if (!ifs) {
-        std::cout << "Couldn't open file!\n";
-        return -1;
-    }
+    pack_manager.mount ("data/pak2.pak");
+    pack_manager.mount ("data/pak1.pak");
+    pack_manager.mount ("data/pak0.pak");
     
-    xtk::bsp_data_quake2 map_data (xtk::fetch_data (std::move (ifs)));
+    auto map_data = xtk::bsp_decode (pack_manager, "maps/q2dm1.bsp");
+    
     context.map_data = &map_data;
-    
     
     setup_sdl_and_gl (context);
     build_gl_resources(context);
@@ -462,7 +542,7 @@ int main (int argc, const char* argv []) try {
 
     return 0;
 }
-catch (std::exception& ex) {
-    std::cout << ex.what () << "\n";
+catch (const std::exception& ex) {
+    std::cout << "ERROR : " << typeid(ex).name() << " : " << ex.what () << "\n";
     return -1;
 }

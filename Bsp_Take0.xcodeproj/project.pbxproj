@@ -10,11 +10,13 @@
 		FA5ACFE11C9DB015001882A4 /* glm.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA5ACFE01C9DB015001882A4 /* glm.framework */; };
 		FA5ACFE31C9DB01A001882A4 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA5ACFE21C9DB01A001882A4 /* SDL2.framework */; };
 		FA5ACFE51C9DB02D001882A4 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA5ACFE41C9DB02D001882A4 /* OpenGL.framework */; };
-		FA5ACFF01C9DB062001882A4 /* bsp_quake2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA5ACFE91C9DB062001882A4 /* bsp_quake2.cpp */; };
-		FA5ACFF11C9DB062001882A4 /* file_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA5ACFED1C9DB062001882A4 /* file_utils.cpp */; };
+		FA5ACFF01C9DB062001882A4 /* bsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA5ACFE91C9DB062001882A4 /* bsp.cpp */; };
 		FA5ACFF21C9DB062001882A4 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = FA5ACFEF1C9DB062001882A4 /* main.mm */; };
 		FA5ACFF41C9DB38D001882A4 /* SDL2.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FA5ACFE21C9DB01A001882A4 /* SDL2.framework */; };
 		FA8929991C9C9C9C00625258 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8929981C9C9C9C00625258 /* AppKit.framework */; };
+		FA8FCDC61C9ED1CC004AE691 /* pakman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA8FCDC41C9ED1CC004AE691 /* pakman.cpp */; };
+		FA8FCDC91C9F173D004AE691 /* pcx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA8FCDC71C9F173D004AE691 /* pcx.cpp */; };
+		FA8FCDCE1C9F4578004AE691 /* wal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA8FCDCC1C9F4578004AE691 /* wal.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,16 +37,19 @@
 		FA5ACFE21C9DB01A001882A4 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = Bsp_Take0/library/SDL2.framework; sourceTree = "<group>"; };
 		FA5ACFE41C9DB02D001882A4 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		FA5ACFE71C9DB062001882A4 /* array_view.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = array_view.hpp; path = source/array_view.hpp; sourceTree = "<group>"; };
-		FA5ACFE81C9DB062001882A4 /* bsp_common.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = bsp_common.hpp; path = source/bsp_common.hpp; sourceTree = "<group>"; };
-		FA5ACFE91C9DB062001882A4 /* bsp_quake2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bsp_quake2.cpp; path = source/bsp_quake2.cpp; sourceTree = "<group>"; };
-		FA5ACFEA1C9DB062001882A4 /* bsp_quake2.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = bsp_quake2.hpp; path = source/bsp_quake2.hpp; sourceTree = "<group>"; };
+		FA5ACFE81C9DB062001882A4 /* bsp_structs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = bsp_structs.hpp; path = source/bsp_structs.hpp; sourceTree = "<group>"; };
+		FA5ACFE91C9DB062001882A4 /* bsp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bsp.cpp; path = source/bsp.cpp; sourceTree = "<group>"; };
 		FA5ACFEB1C9DB062001882A4 /* bsp.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = bsp.hpp; path = source/bsp.hpp; sourceTree = "<group>"; };
 		FA5ACFEC1C9DB062001882A4 /* debug.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = debug.hpp; path = source/debug.hpp; sourceTree = "<group>"; };
-		FA5ACFED1C9DB062001882A4 /* file_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = file_utils.cpp; path = source/file_utils.cpp; sourceTree = "<group>"; };
-		FA5ACFEE1C9DB062001882A4 /* file_utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = file_utils.hpp; path = source/file_utils.hpp; sourceTree = "<group>"; };
 		FA5ACFEF1C9DB062001882A4 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = main.mm; path = source/main.mm; sourceTree = "<group>"; };
-		FA5ACFF31C9DB373001882A4 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = data; path = Bsp_Take0/data; sourceTree = "<group>"; };
 		FA8929981C9C9C9C00625258 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		FA8FCDC41C9ED1CC004AE691 /* pakman.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pakman.cpp; path = source/pakman.cpp; sourceTree = "<group>"; };
+		FA8FCDC51C9ED1CC004AE691 /* pakman.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = pakman.hpp; path = source/pakman.hpp; sourceTree = "<group>"; };
+		FA8FCDC71C9F173D004AE691 /* pcx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pcx.cpp; path = source/pcx.cpp; sourceTree = "<group>"; };
+		FA8FCDC81C9F173D004AE691 /* pcx.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = pcx.hpp; path = source/pcx.hpp; sourceTree = "<group>"; };
+		FA8FCDCB1C9F1813004AE691 /* bitmap.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = bitmap.hpp; path = source/bitmap.hpp; sourceTree = "<group>"; };
+		FA8FCDCC1C9F4578004AE691 /* wal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = wal.cpp; path = source/wal.cpp; sourceTree = "<group>"; };
+		FA8FCDCD1C9F4578004AE691 /* wal.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = wal.hpp; path = source/wal.hpp; sourceTree = "<group>"; };
 		FAAECBDC1C9A0213008F6ACE /* Bsp_Take0 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Bsp_Take0; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -66,7 +71,6 @@
 		FAAECBD31C9A0213008F6ACE = {
 			isa = PBXGroup;
 			children = (
-				FA5ACFF31C9DB373001882A4 /* data */,
 				FAAECBED1C9A0910008F6ACE /* frameworks */,
 				FAAECBDE1C9A0213008F6ACE /* source */,
 				FAAECBDD1C9A0213008F6ACE /* Products */,
@@ -84,15 +88,19 @@
 		FAAECBDE1C9A0213008F6ACE /* source */ = {
 			isa = PBXGroup;
 			children = (
+				FA8FCDCB1C9F1813004AE691 /* bitmap.hpp */,
 				FA5ACFE71C9DB062001882A4 /* array_view.hpp */,
-				FA5ACFE81C9DB062001882A4 /* bsp_common.hpp */,
-				FA5ACFE91C9DB062001882A4 /* bsp_quake2.cpp */,
-				FA5ACFEA1C9DB062001882A4 /* bsp_quake2.hpp */,
+				FA5ACFE81C9DB062001882A4 /* bsp_structs.hpp */,
+				FA5ACFE91C9DB062001882A4 /* bsp.cpp */,
 				FA5ACFEB1C9DB062001882A4 /* bsp.hpp */,
 				FA5ACFEC1C9DB062001882A4 /* debug.hpp */,
-				FA5ACFED1C9DB062001882A4 /* file_utils.cpp */,
-				FA5ACFEE1C9DB062001882A4 /* file_utils.hpp */,
 				FA5ACFEF1C9DB062001882A4 /* main.mm */,
+				FA8FCDC41C9ED1CC004AE691 /* pakman.cpp */,
+				FA8FCDC51C9ED1CC004AE691 /* pakman.hpp */,
+				FA8FCDC71C9F173D004AE691 /* pcx.cpp */,
+				FA8FCDC81C9F173D004AE691 /* pcx.hpp */,
+				FA8FCDCC1C9F4578004AE691 /* wal.cpp */,
+				FA8FCDCD1C9F4578004AE691 /* wal.hpp */,
 			);
 			name = source;
 			path = Bsp_Take0;
@@ -173,7 +181,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "if [ ! -d $BUILT_PRODUCTS_DIR/data ]; then\n    curl http://dl.2bits.in/data.zip -o $BUILT_PRODUCTS_DIR/data.zip\n    mkdir -p $BUILT_PRODUCTS_DIR/data\n    unzip $BUILT_PRODUCTS_DIR/data.zip -d $BUILT_PRODUCTS_DIR/data\n    rm $BUILT_PRODUCTS_DIR/data.zip\nfi";
+			shellScript = "if [ ! -d $BUILT_PRODUCTS_DIR/data ]; then\n    mkdir -p $BUILT_PRODUCTS_DIR/data\n    curl http://dl.2bits.in/pak[0-2].pak -o $BUILT_PRODUCTS_DIR/data/pak#1.pak\nfi";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -184,8 +192,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA5ACFF21C9DB062001882A4 /* main.mm in Sources */,
-				FA5ACFF01C9DB062001882A4 /* bsp_quake2.cpp in Sources */,
-				FA5ACFF11C9DB062001882A4 /* file_utils.cpp in Sources */,
+				FA8FCDC61C9ED1CC004AE691 /* pakman.cpp in Sources */,
+				FA8FCDCE1C9F4578004AE691 /* wal.cpp in Sources */,
+				FA5ACFF01C9DB062001882A4 /* bsp.cpp in Sources */,
+				FA8FCDC91C9F173D004AE691 /* pcx.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
