@@ -504,11 +504,11 @@ void draw_frame (global_state& state) {
     glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
     
     CHECK ();
-    
+/*
     glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 0.0f);
     glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
     glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
-    
+*/    
     CHECK();
 
 }
