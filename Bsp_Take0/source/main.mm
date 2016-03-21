@@ -382,13 +382,12 @@ void teardown_gl_resources (global_state& state) {
 }
 
 void stretch (const xtk::bitmap& _input, xtk::bitmap::value_type* buffer, std::size_t w, std::size_t h) {
-    auto dx = _input.width () / (1.0f*w);
-    auto dy = _input.height () / (1.0f*h);
+    auto dx = 1.0f / w;
+    auto dy = 1.0f / h;
 
     for (auto y = 0; y < h; ++y) {
         for (auto x = 0; x < w; ++x) {
-            buffer [w*y + x] = _input ((int)std::floor (x*dx),
-                                       (int)std::floor (y*dy));
+            buffer [w*y + x] = _input (x*dx, y*dy);
         }
     }
 }
@@ -422,8 +421,8 @@ void build_gl_resources (global_state& state) {
     state.gl_element_count = (GLsizei)vertexes.size();
     CHECK ();
 
-    auto maxw = 0ul;
-    auto maxh = 0ul;
+    auto maxw = 0;
+    auto maxh = 0;
     
     for (const auto& tex: textures) {
         maxw = std::max (maxw, tex.miptex [0].width ());
@@ -513,8 +512,8 @@ void draw_frame (global_state& state) {
 
 }
 
-
 int main (int argc, const char* argv []) try {
+
     global_state context;
     
     xtk::pakman& pack_manager = xtk::pakman::shared();
