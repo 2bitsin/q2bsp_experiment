@@ -28,7 +28,6 @@ bool cocoa_drain_mouse_events (SDL_Window* pWindow, const std::function<void (in
         return wmInfo.info.cocoa.window;
     }) ();
     
-    
     [cWindow trackEventsMatchingMask:NSMouseMovedMask|NSLeftMouseDraggedMask|NSRightMouseDraggedMask
         timeout:0
            mode:NSEventTrackingRunLoopMode
@@ -38,5 +37,6 @@ bool cocoa_drain_mouse_events (SDL_Window* pWindow, const std::function<void (in
             *stop = YES;
         }
     ];
+    
     return didHandleEvent;
 }
