@@ -8,7 +8,7 @@
 
 #include "debug.hpp"
 #include "bsp.hpp"
-#include "pakman.hpp"
+#include "q2pak.hpp"
 #include "cocoa_mouse_workaround.hpp"
 
 #include <string>
@@ -502,7 +502,7 @@ int main (int argc, const char* argv []) try {
 
     global_state context;
     
-    xtk::pakman& pack_manager = xtk::pakman::shared();
+    xtk::q2pak& pack_manager = xtk::q2pak::shared();
     
     pack_manager.mount ("data/pak2.pak");
     pack_manager.mount ("data/pak1.pak");

@@ -37,14 +37,14 @@ static bsp_point2f uv_from_face (const bsp_point3f& vec, const bsp_texinfo& texi
     );
 }
 
-bsp_data xtk::bsp_decode (pakman& pak, const std::string& name) {
+bsp_data xtk::bsp_decode (q2pak& pak, const std::string& name) {
     xtk::Debug::log ("bsp_decode :\n");
     
     bsp_data _odata;
     
-    pakman_lock _mbspdata_lock (pak, name);
+    q2pak_lock _mbspdata_lock (pak, name);
     xtk::Debug::log ("\tLoading map %s ... \n",  name.c_str ());
-    pakman_lock _colormap_lock (pak, "pics/colormap.pcx");
+    q2pak_lock _colormap_lock (pak, "pics/colormap.pcx");
     xtk::Debug::log ("\tLoading map %s ... \n", "pics/colormap.pcx");
     
     auto colormap = pcx_decode(*_colormap_lock);
@@ -80,7 +80,7 @@ bsp_data xtk::bsp_decode (pakman& pak, const std::string& name) {
             continue;
         }
         
-        pakman_lock texlock (pak, "textures/" + name + ".wal");
+        q2pak_lock texlock (pak, "textures/" + name + ".wal");
         _odata.textures.emplace_back (wal_decode (*texlock, palette));
         
         const auto& tex = _odata.textures.back ();

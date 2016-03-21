@@ -15,7 +15,7 @@
 #include "array_view.hpp"
 #include "pcx.hpp"
 #include "wal.hpp"
-#include "pakman.hpp"
+#include "q2pak.hpp"
 
 
 namespace xtk {
@@ -46,7 +46,7 @@ namespace xtk {
         std::vector<bitmap> lightmaps;
     };
     
-    bsp_data bsp_decode (pakman& pak, const std::string& name);
+    bsp_data bsp_decode (q2pak& pak, const std::string& name);
     
 }
 

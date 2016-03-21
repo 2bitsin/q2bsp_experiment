@@ -15,7 +15,7 @@
 		FA5ACFF41C9DB38D001882A4 /* SDL2.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FA5ACFE21C9DB01A001882A4 /* SDL2.framework */; };
 		FA6C1B451CA06D8F00CB1103 /* cocoa_mouse_workaround.mm in Sources */ = {isa = PBXBuildFile; fileRef = FA6C1B431CA06D8F00CB1103 /* cocoa_mouse_workaround.mm */; };
 		FA8929991C9C9C9C00625258 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8929981C9C9C9C00625258 /* AppKit.framework */; };
-		FA8FCDC61C9ED1CC004AE691 /* pakman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA8FCDC41C9ED1CC004AE691 /* pakman.cpp */; };
+		FA8FCDC61C9ED1CC004AE691 /* q2pak.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA8FCDC41C9ED1CC004AE691 /* q2pak.cpp */; };
 		FA8FCDC91C9F173D004AE691 /* pcx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA8FCDC71C9F173D004AE691 /* pcx.cpp */; };
 		FA8FCDCE1C9F4578004AE691 /* wal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA8FCDCC1C9F4578004AE691 /* wal.cpp */; };
 /* End PBXBuildFile section */
@@ -46,8 +46,8 @@
 		FA6C1B431CA06D8F00CB1103 /* cocoa_mouse_workaround.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = cocoa_mouse_workaround.mm; path = source/cocoa_mouse_workaround.mm; sourceTree = "<group>"; };
 		FA6C1B441CA06D8F00CB1103 /* cocoa_mouse_workaround.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = cocoa_mouse_workaround.hpp; path = source/cocoa_mouse_workaround.hpp; sourceTree = "<group>"; };
 		FA8929981C9C9C9C00625258 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		FA8FCDC41C9ED1CC004AE691 /* pakman.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pakman.cpp; path = source/pakman.cpp; sourceTree = "<group>"; };
-		FA8FCDC51C9ED1CC004AE691 /* pakman.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = pakman.hpp; path = source/pakman.hpp; sourceTree = "<group>"; };
+		FA8FCDC41C9ED1CC004AE691 /* q2pak.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = q2pak.cpp; path = source/q2pak.cpp; sourceTree = "<group>"; };
+		FA8FCDC51C9ED1CC004AE691 /* q2pak.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = q2pak.hpp; path = source/q2pak.hpp; sourceTree = "<group>"; };
 		FA8FCDC71C9F173D004AE691 /* pcx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pcx.cpp; path = source/pcx.cpp; sourceTree = "<group>"; };
 		FA8FCDC81C9F173D004AE691 /* pcx.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = pcx.hpp; path = source/pcx.hpp; sourceTree = "<group>"; };
 		FA8FCDCB1C9F1813004AE691 /* bitmap.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = bitmap.hpp; path = source/bitmap.hpp; sourceTree = "<group>"; };
@@ -98,8 +98,8 @@
 				FA5ACFEB1C9DB062001882A4 /* bsp.hpp */,
 				FA5ACFEC1C9DB062001882A4 /* debug.hpp */,
 				FA5ACFEF1C9DB062001882A4 /* main.cpp */,
-				FA8FCDC41C9ED1CC004AE691 /* pakman.cpp */,
-				FA8FCDC51C9ED1CC004AE691 /* pakman.hpp */,
+				FA8FCDC41C9ED1CC004AE691 /* q2pak.cpp */,
+				FA8FCDC51C9ED1CC004AE691 /* q2pak.hpp */,
 				FA8FCDC71C9F173D004AE691 /* pcx.cpp */,
 				FA8FCDC81C9F173D004AE691 /* pcx.hpp */,
 				FA8FCDCC1C9F4578004AE691 /* wal.cpp */,
@@ -197,7 +197,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA5ACFF21C9DB062001882A4 /* main.cpp in Sources */,
-				FA8FCDC61C9ED1CC004AE691 /* pakman.cpp in Sources */,
+				FA8FCDC61C9ED1CC004AE691 /* q2pak.cpp in Sources */,
 				FA8FCDCE1C9F4578004AE691 /* wal.cpp in Sources */,
 				FA5ACFF01C9DB062001882A4 /* bsp.cpp in Sources */,
 				FA8FCDC91C9F173D004AE691 /* pcx.cpp in Sources */,

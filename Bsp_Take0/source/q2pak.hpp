@@ -1,30 +1,30 @@
 //
-//  pakman.hpp
+//  q2pak.hpp
 //  Bsp_Take0
 //
 //  Created by Aleksandras Sevcenko on 3/20/16.
 //  Copyright © 2016 Aleksandr Ševčenko. All rights reserved.
 //
 
-#ifndef pakman_hpp
-#define pakman_hpp
+#ifndef q2pak_hpp
+#define q2pak_hpp
 
 #include <unordered_map>
 #include "array_view.hpp"
 
 namespace xtk {
-    struct pakman {
+    struct q2pak {
         
-       ~pakman ();
+       ~q2pak ();
        
-        static pakman& shared ();
+        static q2pak& shared ();
         
-        pakman (std::initializer_list<std::string> args);
-        pakman () = default;
-        pakman (const pakman&) = delete;
-        pakman (pakman&&) = delete;
-        pakman& operator = (const pakman&) = delete;
-        pakman& operator = (pakman&&) = delete;
+        q2pak (std::initializer_list<std::string> args);
+        q2pak () = default;
+        q2pak (const q2pak&) = delete;
+        q2pak (q2pak&&) = delete;
+        q2pak& operator = (const q2pak&) = delete;
+        q2pak& operator = (q2pak&&) = delete;
         
         void mount (const std::string& path, const std::string& prefix = "");
         
@@ -38,17 +38,17 @@ namespace xtk {
     };
     
     
-    struct pakman_lock {
+    struct q2pak_lock {
         typedef array_view<std::uint8_t> view_type;
         
-        pakman_lock (pakman& man, const std::string& name):
+        q2pak_lock (q2pak& man, const std::string& name):
             m_view (man.lock (name)),
             m_name (name),
             m_man (man)
         {
         }
         
-       ~pakman_lock () {
+       ~q2pak_lock () {
             m_man.unlock (m_name);
         }
         
@@ -63,10 +63,10 @@ namespace xtk {
     private:
         view_type m_view;
         std::string m_name;
-        pakman& m_man;
+        q2pak& m_man;
         
     };
 }
 
 
-#endif /* pakman_hpp */
+#endif /* q2pak_hpp */

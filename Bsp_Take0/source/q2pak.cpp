@@ -1,12 +1,12 @@
 //
-//  pakman.cpp
+//  q2pak.cpp
 //  Bsp_Take0
 //
 //  Created by Aleksandras Sevcenko on 3/20/16.
 //  Copyright © 2016 Aleksandr Ševčenko. All rights reserved.
 //
 
-#include "pakman.hpp"
+#include "q2pak.hpp"
 #include "debug.hpp"
 
 #include <string>
@@ -34,15 +34,15 @@ struct pak_resource {
     std::uint32_t length;
 };
 
-pakman::pakman (std::initializer_list<std::string> args):
-    pakman ()
+q2pak::q2pak (std::initializer_list<std::string> args):
+    q2pak ()
 {
     for (const auto& name: args) {
         mount (name);
     }
 }
 
-void pakman::mount (const std::string& name, const std::string& prefix) {
+void q2pak::mount (const std::string& name, const std::string& prefix) {
     auto it = m_pakfile.find (name);
     if (it != m_pakfile.end ()) {
         return;
@@ -107,7 +107,7 @@ void pakman::mount (const std::string& name, const std::string& prefix) {
     }
 }
 
-pakman::~pakman() {
+q2pak::~q2pak() {
     #if XTK_DEBUG
     for (const auto& resource: m_resource) {
         const auto& name = resource.first;
@@ -130,7 +130,7 @@ pakman::~pakman() {
 }
 
 
-const array_view<std::uint8_t>& pakman::lock (const std::string& name) {
+const array_view<std::uint8_t>& q2pak::lock (const std::string& name) {
     auto it = m_resource.find (name);
     if (it == m_resource.end ()) {
         throw std::runtime_error (name + ", resource not found.");
@@ -144,7 +144,7 @@ const array_view<std::uint8_t>& pakman::lock (const std::string& name) {
     return resource_data.second;
 }
 
-void pakman::unlock (const std::string& name) {
+void q2pak::unlock (const std::string& name) {
     auto it = m_resource.find (name);
     if (it == m_resource.end ()) {
         throw std::runtime_error (name + ", resource not found.");
@@ -156,8 +156,8 @@ void pakman::unlock (const std::string& name) {
     --reference_count;
 }
 
-pakman& pakman::shared () {
-    static pakman _shared;
+q2pak& q2pak::shared () {
+    static q2pak _shared;
     return _shared;
 }
 
