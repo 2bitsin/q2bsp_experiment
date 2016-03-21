@@ -481,8 +481,8 @@ void update_uniforms (global_state& state) {
 void draw_frame (global_state& state) {
 //    auto& map_data = *state.map_data;
     
-    glClearColor (0.0f, 0.25f, 0.0f, 1.0f);
-    glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClearColor (1.0f, 0.0f, 1.0f, 1.0f);
+    glClear (GL_DEPTH_BUFFER_BIT);
     
     CHECK();
     
