@@ -84,11 +84,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Bsp_Take0/source/bsp.cpp"
-            timestampString = "480301504.063753"
+            timestampString = "480304815.210501"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "218"
-            endingLineNumber = "218"
+            startingLineNumber = "222"
+            endingLineNumber = "222"
             landmarkName = "xtk::bsp_decode (q2pak&amp; pak, const std::string&amp; name)"
             landmarkType = "5">
          </BreakpointContent>

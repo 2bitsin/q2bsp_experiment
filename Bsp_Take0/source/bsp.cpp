@@ -50,13 +50,17 @@ void stretch (xtk::bitmap& _output, int _oid, const xtk::bitmap& _input, int _ii
 }
 
 void etch_lightmap (xtk::bitmap& _output, int x0, int y0, const array_view<glm::tvec3<std::uint8_t>>& lmview, std::int32_t w_lmap, std::int32_t h_lmap) {
-//    const auto _input = tbitmap<std::uint8_t, glm::tvec3> (lmview, w_lmap, h_lmap);
-//    auto dx = 1.0f/w_lmap;
-//    auto dy = 1.0f/h_lmap;
-    
+/*
+    const auto _input = tbitmap<std::uint8_t, glm::tvec3> (lmview, w_lmap, h_lmap);
+    auto dx = 1.0f/w_lmap;
+    auto dy = 1.0f/h_lmap;
+*/
+
     for (auto y = 0; y < h_lmap; ++y) {
         for (auto x = 0; x < w_lmap; ++x) {
-            _output (x0 + x, y0 + y, 0) = bitmap::value_type (lmview [w_lmap*y + x], 255);
+            _output (x0 + x + 8 - w_lmap/2,
+                     y0 + y + 8 - h_lmap/2, 0)
+            = bitmap::value_type (lmview [w_lmap*y + x], 255);
         }
     }
 }
@@ -254,11 +258,14 @@ bsp_data xtk::bsp_decode (q2pak& pak, const std::string& name) {
             auto delta_edge = 1.0f/lmedgew;
             
             etch_lightmap (_odata.lightmaps, lmx0, lmy0, lightmap_view, w_lmap, h_lmap);
+        
             
             for (auto i = 0; i < temp.size (); ++i) {
+            
+            
                 temp [i].uvlmap = bsp_point3f (
-                    delta_edge * (lmx0 + (temp [i].uvtex.x - min_u)),
-                    delta_edge * (lmy0 + (temp [i].uvtex.y - min_v)),
+                    delta_edge * (lmx0 + 8 - w_lmap/2 + (temp [i].uvtex.x - min_u)),
+                    delta_edge * (lmy0 + 8 - h_lmap/2 + (temp [i].uvtex.y - min_v)),
                     0.0f);
             }
         }
