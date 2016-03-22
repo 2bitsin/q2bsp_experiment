@@ -48,13 +48,13 @@ char __basic_vertex_source [] = R"(
     layout (location = 1) in vec3 vs_vertex_normal;
     layout (location = 2) in vec3 vs_vertex_uv_tex;
     layout (location = 3) in vec3 vs_vertex_color;
-    layout (location = 4) in vec3 vs_vertex_uvlmap;
+    layout (location = 4) in vec2 vs_vertex_uvlmap;
 
     out vec4 fs_vertex_position;
     out vec3 fs_vertex_normal;
     out vec3 fs_vertex_uv_tex;
+	out vec2 fs_vertex_uvlmap;
     out vec3 fs_vertex_color;
-    out vec3 fs_vertex_uvlmap;
 
     void main () {
         fs_vertex_position = g_model_view_projection * vec4 (vs_vertex_position, 1.0);
@@ -84,14 +84,14 @@ char __basic_fragment_source [] = R"(
     in vec4 fs_vertex_position;
     in vec3 fs_vertex_normal;
     in vec3 fs_vertex_uv_tex;
-    in vec3 fs_vertex_uvlmap;
+    in vec2 fs_vertex_uvlmap;
     in vec3 fs_vertex_color;
 
     layout (location = 0) out vec4 out_fragment_color;
 
     void main () {
         vec3 lmapc = texture (g_lightmap_array, fs_vertex_uvlmap.xy).rgb;
-        vec3 color = /*texture (g_texture_array, fs_vertex_uv_tex).rgb */ lmapc;
+        vec3 color = texture (g_texture_array, fs_vertex_uv_tex).rgb * lmapc;
         out_fragment_color = vec4 (mix (1 - color, color, g_constant_alpha), 1.0f);
     }
 )";
@@ -114,7 +114,7 @@ struct global_state {
     GLuint gl_lightmaps;
     
     glm::vec3 player_velocity;
-    glm::vec3 player_position;
+	glm::vec3 player_position = {100.0f, 630.0f, 630.0f};
     glm::vec3 player_euler_angles;
     glm::vec3 player_forward;
     glm::vec3 player_sideways;
@@ -411,7 +411,7 @@ void build_gl_resources (global_state& state) {
     glVertexAttribPointer (1u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->normal);
     glVertexAttribPointer (2u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->uvtex);
     glVertexAttribPointer (3u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->color);
-    glVertexAttribPointer (4u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->uvlmap);
+    glVertexAttribPointer (4u, 2u, GL_FLOAT, GL_FALSE, stride, &tempor->uvlmap);
     
     state.gl_element_count = (GLsizei)vertexes.size();
     CHECK ();

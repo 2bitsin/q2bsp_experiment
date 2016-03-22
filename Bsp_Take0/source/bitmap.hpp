@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <algorithm>
+#include <fstream>
 
 #include "array_view.hpp"
 #include "debug.hpp"
@@ -103,7 +104,44 @@ namespace xtk {
             m_depth  = std::exchange (_old.m_depth, 0);
             return *this;
         }
-        
+		
+		void write_as_tga (const std::string& path, int z = 0) {
+			typedef std::uint8_t BYTE;
+			typedef std::uint16_t WORD;
+		#pragma pack(push, 1)
+			typedef struct _TgaHeader
+			{
+				BYTE IDLength;        /* 00h  Size of Image ID field */
+				BYTE ColorMapType;    /* 01h  Color map type */
+				BYTE ImageType;       /* 02h  Image type code */
+				WORD CMapStart;       /* 03h  Color map origin */
+				WORD CMapLength;      /* 05h  Color map length */
+				BYTE CMapDepth;       /* 07h  Depth of color map entries */
+				WORD XOffset;         /* 08h  X origin of image */
+				WORD YOffset;         /* 0Ah  Y origin of image */
+				WORD Width;           /* 0Ch  Width of image */
+				WORD Height;          /* 0Eh  Height of image */
+				BYTE PixelDepth;      /* 10h  Image pixel size */
+				BYTE ImageDescriptor; /* 11h  Image descriptor byte */
+			} TGAHEAD;
+		#pragma pack(pop)
+			TGAHEAD header = {0};
+			header.ImageType = 2;
+			header.Width = m_width;
+			header.Height = m_height;
+			header.PixelDepth = 24;
+			header.ImageDescriptor = 0x20;
+			std::ofstream out (path, std::ios::binary);
+			out.write (reinterpret_cast<const char*>(&header), sizeof (header));
+			auto offs = z*area ();
+			for (auto i = 0; i < volume(); ++i) {
+				out.write (reinterpret_cast<const char *>(&m_data [i + offs].b), sizeof (m_data [i + offs].b));
+				out.write (reinterpret_cast<const char *>(&m_data [i + offs].g), sizeof (m_data [i + offs].g));
+				out.write (reinterpret_cast<const char *>(&m_data [i + offs].r), sizeof (m_data [i + offs].r));
+			}
+
+		}
+		
         
     private:
         template <typename A, typename B, typename Q>

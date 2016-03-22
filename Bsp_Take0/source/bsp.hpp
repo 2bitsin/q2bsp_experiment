@@ -28,7 +28,7 @@ namespace xtk {
                 const bsp_point3f& _2 = bsp_point3f (),
                 const bsp_point3f& _3 = bsp_point3f (),
                 const bsp_point3f& _4 = bsp_point3f (),
-                const bsp_point3f& _5 = bsp_point3f ())
+                const bsp_point2f& _5 = bsp_point2f ())
             noexcept:
                 vertex (_1),
                 normal (_2),
@@ -39,9 +39,9 @@ namespace xtk {
             
             bsp_point3f vertex;
             bsp_point3f normal;
-            bsp_point3f uvlmap;
+			bsp_point3f uvtex;
             bsp_point3f color;
-            bsp_point3f uvtex;
+			bsp_point2f uvlmap;
         };
         
         std::vector<vertex_attribute> vertexes;
