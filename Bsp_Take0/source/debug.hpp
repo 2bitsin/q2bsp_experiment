@@ -15,7 +15,8 @@ namespace xtk {
     struct Debug {
         template <typename... Args>
         static void log (Args&&... args) {
-            std::printf (args...);
+            std::fprintf (stdout, args...);
+            std::fflush (stdout);
         }
     };
     

@@ -102,6 +102,7 @@ bsp_data xtk::bsp_decode (q2pak& pak, const std::string& name) {
     auto planes          = array_view_from_lump<bsp_plane>    (*_mbspdata_lock, header.planes);
     auto texture_info    = array_view_from_lump<bsp_texinfo>  (*_mbspdata_lock, header.texinfo);
     auto lightmaps       = array_view_from_lump<std::uint8_t> (*_mbspdata_lock, header.lightmaps);
+    auto entities        = array_view_from_lump<char>         (*_mbspdata_lock, header.entities);
     
     auto& buffer = _odata.vertexes;
     
@@ -165,7 +166,7 @@ bsp_data xtk::bsp_decode (q2pak& pak, const std::string& name) {
         stretch (_odata.textures, texit->second, texture_bits [texit->second].miptex [0], 1);
         
     }
-    
+    xtk::Debug::log("Processing faces ");
     for (auto face_index = 0; face_index < faces.length(); ++face_index) {
         const auto& face = faces [face_index];
         
@@ -286,7 +287,7 @@ bsp_data xtk::bsp_decode (q2pak& pak, const std::string& name) {
 		}
 		
 		
-        xtk::Debug::log("Processed %u/%u ...\r", face_index, faces.length());
+        xtk::Debug::log(".");
         
         /****************************************/
         /* Construct face polygons              */
@@ -302,6 +303,10 @@ bsp_data xtk::bsp_decode (q2pak& pak, const std::string& name) {
         
         temp.clear ();
     }
+    
+    xtk::Debug::log(" done.\n");
+    
+    
 	
 	_odata.lightmaps.write_as_tga("lightmaps.tga");
 	

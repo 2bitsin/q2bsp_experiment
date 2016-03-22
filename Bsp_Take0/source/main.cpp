@@ -92,7 +92,7 @@ char __basic_fragment_source [] = R"(
     void main () {
         vec3 lmapc = texture (g_lightmap_array, fs_vertex_uvlmap.xy).rgb;
         vec3 color = texture (g_texture_array, fs_vertex_uv_tex).rgb * lmapc;
-        out_fragment_color = pow (vec4 (mix (1 - color, color, g_constant_alpha), 1.0f), vec4 (1.0/1.5));
+        out_fragment_color = pow (vec4 (mix (1 - color, color, g_constant_alpha), 1.0f), vec4 (1.0/1.8, 1.0/2.0, 1.0/2.2, 1.0));
     }
 )";
 
@@ -137,7 +137,7 @@ std::string annotate_shader_source (const std::string& source, const std::string
             std::smatch result;
             if (std::regex_search (line, result, ereg)) {
                 auto eline = std::stoul (result [2].str ());
-                m_log [eline].push_back(result [3].str ());
+                m_log [eline].push_back (result [3].str ());
             }
         }
     }
