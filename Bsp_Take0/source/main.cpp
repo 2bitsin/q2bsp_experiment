@@ -433,7 +433,7 @@ void build_gl_resources (global_state& state) {
     glActiveTexture(GL_TEXTURE1);
     glGenTextures (1u, &state.gl_lightmaps);
     glBindTexture (GL_TEXTURE_2D, state.gl_lightmaps);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
         (GLsizei)lightmaps.width (),
