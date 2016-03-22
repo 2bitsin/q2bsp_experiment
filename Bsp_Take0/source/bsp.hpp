@@ -11,11 +11,47 @@
 
 #include <vector>
 
-#include "bsp_common.hpp"
-#include "bsp_quake2.hpp"
+#include "bsp_structs.hpp"
+#include "array_view.hpp"
+#include "pcx.hpp"
+#include "wal.hpp"
+#include "q2pak.hpp"
+
 
 namespace xtk {
-
+    
+    struct bsp_data {
+        struct vertex_attribute {
+    
+            inline vertex_attribute (
+                const bsp_point3f& _1 = bsp_point3f (),
+                const bsp_point3f& _2 = bsp_point3f (),
+                const bsp_point3f& _3 = bsp_point3f (),
+                const bsp_point3f& _4 = bsp_point3f (),
+                const bsp_point2f& _5 = bsp_point2f ())
+            noexcept:
+                vertex (_1),
+                normal (_2),
+                uvtex  (_3),
+                color  (_4),
+                uvlmap (_5)
+            {}
+            
+            bsp_point3f vertex;
+            bsp_point3f normal;
+			bsp_point3f uvtex;
+            bsp_point3f color;
+			bsp_point2f uvlmap;
+        };
+        
+        std::vector<vertex_attribute> vertexes;
+        
+        bitmap textures;
+        bitmap lightmaps;
+    };
+    
+    bsp_data bsp_decode (q2pak& pak, const std::string& name);
+    
 }
 
 #endif /* bsp_hpp */
