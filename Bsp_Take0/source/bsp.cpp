@@ -50,7 +50,6 @@ void stretch (xtk::bitmap& _output, int _oid, const xtk::bitmap& _input, int _ii
 }
 
 void etch_lightmap (xtk::bitmap& _output, int x0, int y0, const array_view<glm::tvec3<std::uint8_t>>& lmview, std::int32_t w_lmap, std::int32_t h_lmap) {
-/*
     const auto _input = tbitmap<std::uint8_t, glm::tvec3> (lmview, w_lmap, h_lmap);
 	auto dx = 1.0f/16.0f;
     auto dy = 1.0f/16.0f;
@@ -60,15 +59,15 @@ void etch_lightmap (xtk::bitmap& _output, int x0, int y0, const array_view<glm::
 			_output (x0 + x, y0 + y, 0) = bitmap::value_type (_input (dx*x, dy*y, 0), 255);
 		}
 	}
- */
 
+ /*
     for (auto y = 0; y < h_lmap; ++y) {
         for (auto x = 0; x < w_lmap; ++x) {
             _output (x0 + x, y0 + y, 0)
             = bitmap::value_type (lmview [w_lmap*y + x], 255);
         }
     }
-
+ */
 }
 
 std::uint32_t next_pot (std::uint32_t v) {
@@ -267,18 +266,19 @@ bsp_data xtk::bsp_decode (q2pak& pak, const std::string& name) {
         
             
             for (auto i = 0; i < temp.size (); ++i) {
-            /*
+				
 				auto lu = 16.0f*((temp [i].uvtex.x - min_u)/(w_lmap*16.0f));
 				auto lv = 16.0f*((temp [i].uvtex.y - min_v)/(h_lmap*16.0f));
 				__xtk_assert (std::logic_error, lu >= 0.0f && lu < 16.0f);
 				__xtk_assert (std::logic_error, lv >= 0.0f && lv < 16.0f);
-			 */
-				
+			 
+			 /*
 				auto lu = ((temp [i].uvtex.x - min_u)/(16.0f));
 				auto lv = ((temp [i].uvtex.y - min_v)/(16.0f));
-				
+			  */
                 temp [i].uvlmap = delta_edge * bsp_point2f (lmx0 + lu, lmy0 + lv);
-            }
+			  
+			}
         }
 		
 		for (auto i = 0; i < temp.size (); ++i) {
