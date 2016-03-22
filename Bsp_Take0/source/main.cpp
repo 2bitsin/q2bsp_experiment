@@ -92,7 +92,7 @@ char __basic_fragment_source [] = R"(
     void main () {
         vec3 lmapc = texture (g_lightmap_array, fs_vertex_uvlmap.xy).rgb;
         vec3 color = texture (g_texture_array, fs_vertex_uv_tex).rgb * lmapc;
-        out_fragment_color = vec4 (mix (1 - color, color, g_constant_alpha), 1.0f);
+        out_fragment_color = pow (vec4 (mix (1 - color, color, g_constant_alpha), 1.0f), vec4 (1.0/1.0));
     }
 )";
 
