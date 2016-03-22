@@ -27,23 +27,27 @@ namespace xtk {
                 const bsp_point3f& _1 = bsp_point3f (),
                 const bsp_point3f& _2 = bsp_point3f (),
                 const bsp_point3f& _3 = bsp_point3f (),
-                const bsp_point3f& _4 = bsp_point3f ())
+                const bsp_point3f& _4 = bsp_point3f (),
+                const bsp_point3f& _5 = bsp_point3f ())
             noexcept:
                 vertex (_1),
                 normal (_2),
-                uv_tex (_3),
-                color  (_4)
+                uvtex  (_3),
+                color  (_4),
+                uvlmap (_5)
             {}
             
             bsp_point3f vertex;
             bsp_point3f normal;
-            bsp_point3f uv_tex;
+            bsp_point3f uvlmap;
             bsp_point3f color;
+            bsp_point3f uvtex;
         };
         
         std::vector<vertex_attribute> vertexes;
-        std::vector<wal_bitmap> textures;
-        std::vector<bitmap> lightmaps;
+        
+        bitmap textures;
+        bitmap lightmaps;
     };
     
     bsp_data bsp_decode (q2pak& pak, const std::string& name);

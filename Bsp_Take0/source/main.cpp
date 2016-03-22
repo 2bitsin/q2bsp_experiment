@@ -43,22 +43,24 @@ char __basic_vertex_source [] = R"(
     uniform mat3 g_normal_matrix;
     uniform vec3 g_constant_color;
     uniform float g_constant_alpha;
-    uniform sampler2DArray g_texture_array;
 
     layout (location = 0) in vec3 vs_vertex_position;
     layout (location = 1) in vec3 vs_vertex_normal;
     layout (location = 2) in vec3 vs_vertex_uv_tex;
     layout (location = 3) in vec3 vs_vertex_color;
+    layout (location = 4) in vec3 vs_vertex_uvlmap;
 
     out vec4 fs_vertex_position;
     out vec3 fs_vertex_normal;
     out vec3 fs_vertex_uv_tex;
     out vec3 fs_vertex_color;
+    out vec3 fs_vertex_uvlmap;
 
     void main () {
         fs_vertex_position = g_model_view_projection * vec4 (vs_vertex_position, 1.0);
         fs_vertex_normal = g_normal_matrix * vs_vertex_position;
         fs_vertex_uv_tex = vs_vertex_uv_tex;
+        fs_vertex_uvlmap = vs_vertex_uvlmap;
         fs_vertex_color = vs_vertex_color;
         
         gl_Position = fs_vertex_position;
@@ -77,17 +79,20 @@ char __basic_fragment_source [] = R"(
     uniform vec3 g_constant_color;
     uniform float g_constant_alpha;
     uniform sampler2DArray g_texture_array;
+    uniform sampler2D g_lightmap_array;
 
     in vec4 fs_vertex_position;
     in vec3 fs_vertex_normal;
     in vec3 fs_vertex_uv_tex;
+    in vec3 fs_vertex_uvlmap;
     in vec3 fs_vertex_color;
 
     layout (location = 0) out vec4 out_fragment_color;
 
     void main () {
-        vec3 color = texture (g_texture_array, fs_vertex_uv_tex).rgb;
-        out_fragment_color = vec4 (mix (fs_vertex_color, color, g_constant_alpha), 1.0f);
+        vec3 lmapc = texture (g_lightmap_array, fs_vertex_uvlmap.xy).rgb;
+        vec3 color = /*texture (g_texture_array, fs_vertex_uv_tex).rgb */ lmapc;
+        out_fragment_color = vec4 (mix (1 - color, color, g_constant_alpha), 1.0f);
     }
 )";
 
@@ -106,6 +111,7 @@ struct global_state {
     GLuint gl_varray;
     GLuint gl_program;
     GLuint gl_textures;
+    GLuint gl_lightmaps;
     
     glm::vec3 player_velocity;
     glm::vec3 player_position;
@@ -337,11 +343,11 @@ bool execute_run_loop (global_state& state) {
             return false;
         
         switch (pEvent.type) {
-            SDL_MOUSEMOTION:
+            case SDL_MOUSEMOTION:
                 handle_mouse_event(state, pEvent.motion.xrel, pEvent.motion.yrel);
                 break;
-            SDL_KEYDOWN:
-            SDL_KEYUP:
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
                 break;
             default:
                 break;
@@ -383,6 +389,7 @@ void build_gl_resources (global_state& state) {
     const auto& map_data = *state.map_data;
     const auto& vertexes = map_data.vertexes;
     const auto& textures = map_data.textures;
+    const auto& lightmaps = map_data.lightmaps;
     
     glGenBuffers (1u, &state.gl_buffer_vertex);
     glBindBuffer (GL_ARRAY_BUFFER, state.gl_buffer_vertex);
@@ -395,39 +402,45 @@ void build_gl_resources (global_state& state) {
     glEnableVertexAttribArray (1u);
     glEnableVertexAttribArray (2u);
     glEnableVertexAttribArray (3u);
+    glEnableVertexAttribArray (4u);
 
     auto tempor = reinterpret_cast<const xtk::bsp_data::vertex_attribute*>(0);
     auto stride = (GLsizei)sizeof (xtk::bsp_data::vertex_attribute);
     
     glVertexAttribPointer (0u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->vertex);
     glVertexAttribPointer (1u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->normal);
-    glVertexAttribPointer (2u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->uv_tex);
+    glVertexAttribPointer (2u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->uvtex);
     glVertexAttribPointer (3u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->color);
+    glVertexAttribPointer (4u, 3u, GL_FLOAT, GL_FALSE, stride, &tempor->uvlmap);
     
     state.gl_element_count = (GLsizei)vertexes.size();
     CHECK ();
-
-    auto maxw = 0;
-    auto maxh = 0;
     
-    for (const auto& tex: textures) {
-        maxw = std::max (maxw, tex.miptex [0].width ());
-        maxh = std::max (maxh, tex.miptex [0].height ());
-    }
-    
-    auto buffer = std::make_unique<xtk::bitmap::value_type []> (maxw * maxh * textures.size ());
-    
-    for (auto i = 0u; i < textures.size (); ++i) {
-        stretch (textures [i].miptex [0], &buffer [i*maxw*maxh], maxw, maxh);
-    }
-    
+    glActiveTexture(GL_TEXTURE0);
     glGenTextures (1u, &state.gl_textures);
     glBindTexture (GL_TEXTURE_2D_ARRAY, state.gl_textures);
     glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexImage3D (GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, (GLsizei)maxw, (GLsizei)maxh, (GLsizei)textures.size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get ());
-    glGenerateMipmap (GL_TEXTURE_2D_ARRAY);
+    glTexImage3D (GL_TEXTURE_2D_ARRAY, 0, GL_RGBA,
+        (GLsizei)textures.width (),
+        (GLsizei)textures.height (),
+        (GLsizei)textures.depth (),
+        0, GL_RGBA, GL_UNSIGNED_BYTE,
+        textures.data());
+    glGenerateMipmap (GL_TEXTURE_2D_ARRAY);    
+    CHECK();
     
+    glActiveTexture(GL_TEXTURE1);
+    glGenTextures (1u, &state.gl_lightmaps);
+    glBindTexture (GL_TEXTURE_2D, state.gl_lightmaps);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+        (GLsizei)lightmaps.width (),
+        (GLsizei)lightmaps.height (),
+        0, GL_RGBA, GL_UNSIGNED_BYTE,
+        lightmaps.data());
+    glGenerateMipmap (GL_TEXTURE_2D);
     CHECK();
 }
 
@@ -464,10 +477,9 @@ void update_uniforms (global_state& state) {
 }
 
 void draw_frame (global_state& state) {
-//    auto& map_data = *state.map_data;
     
     glClearColor (1.0f, 0.0f, 1.0f, 1.0f);
-    glClear (GL_DEPTH_BUFFER_BIT);
+    glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
     CHECK();
     
@@ -478,9 +490,16 @@ void draw_frame (global_state& state) {
     
     CHECK ();
     
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture (GL_TEXTURE_2D_ARRAY, state.gl_textures);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture (GL_TEXTURE_2D, state.gl_lightmaps);
+    
     glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 1.0f);
+    
     glUniform1i (glGetUniformLocation (state.gl_program, "g_texture_array"), 0);
+    glUniform1i (glGetUniformLocation (state.gl_program, "g_lightmap_array"), 1);
     
     CHECK ();
     
@@ -489,11 +508,11 @@ void draw_frame (global_state& state) {
     glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
     
     CHECK ();
-/*
-    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 0.0f);
-    glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
-*/    
+
+//    glUniform1f (glGetUniformLocation (state.gl_program, "g_constant_alpha"), 0.0f);
+//    glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+//    glDrawArrays (GL_TRIANGLES, 0, state.gl_element_count);
+    
     CHECK();
 
 }
